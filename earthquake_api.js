@@ -18,3 +18,16 @@ const fetchLiveEarthquakes = async () => {
 
         console.log(`Found ${data.metadata.count} earthquakes in the last hour.`);
 
+        // Loop through the features (earthquakes)
+        data.features.forEach(quake => {
+            const mag = quake.properties.mag;
+            const place = quake.properties.place;
+            const time = new Date(quake.properties.time).toLocaleString();
+
+            // Coordinates are [longitude, latitude, depth]
+            const coords = quake.geometry.coordinates;
+            const lng = coords[0];
+            const lat = coords[1];
+
+            console.log(`[${time}] Magnitude ${mag} at ${place} (Lat: ${lat}, Lng: ${lng})`);
+        });
