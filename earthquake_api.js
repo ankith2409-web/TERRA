@@ -31,3 +31,12 @@ const fetchLiveEarthquakes = async () => {
 
             console.log(`[${time}] Magnitude ${mag} at ${place} (Lat: ${lat}, Lng: ${lng})`);
         });
+        
+        return data;
+    } catch (error) {
+        console.error("Could not fetch earthquake data:", error);
+    }
+};
+
+// Call the function
+// fetchLiveEarthquakes();
