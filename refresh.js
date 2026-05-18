@@ -49,3 +49,8 @@ const EarthquakeBackend = (function () {
             }
         }
     }
+
+       /** Emit a status update */
+    function _emitStatus(status, detail) {
+        _notify(_onStatusCallbacks, { status, detail, timestamp: Date.now() });
+    }
