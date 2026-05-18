@@ -36,3 +36,16 @@ const EarthquakeBackend = (function () {
     const _onUpdateCallbacks = [];
     const _onErrorCallbacks = [];
     const _onStatusCallbacks = [];
+ 
+       // ── Helpers ─────────────────────────────────────────────────
+
+    /** Broadcast to all registered callbacks of a given type */
+    function _notify(list, payload) {
+        for (let i = 0; i < list.length; i++) {
+            try {
+                list[i](payload);
+            } catch (err) {
+                console.error('[EarthquakeBackend] Subscriber threw:', err);
+            }
+        }
+    }
