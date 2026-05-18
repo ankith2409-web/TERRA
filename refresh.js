@@ -31,3 +31,8 @@ const EarthquakeBackend = (function () {
     let _lastSuccessTime = null;
     let _lastData = null;             // cached latest dataset
     let _consecutiveErrors = 0;
+
+    // Subscriber callbacks
+    const _onUpdateCallbacks = [];
+    const _onErrorCallbacks = [];
+    const _onStatusCallbacks = [];
