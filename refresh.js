@@ -54,3 +54,17 @@ const EarthquakeBackend = (function () {
     function _emitStatus(status, detail) {
         _notify(_onStatusCallbacks, { status, detail, timestamp: Date.now() });
     }
+	
+     /** Parse raw USGS GeoJSON into a clean array of earthquake objects */
+    function _parse(geojson) {
+        if (!geojson || !Array.isArray(geojson.features)) {
+            return [];
+        }
+        return geojson.features.map(function (feature) {
+            const props = feature.properties || {};
+            const coords = (feature.geometry && feature.geometry.coordinates) || [0, 0, 0];
+            return {
+                id: feature.id || null,
+                magnitude: props.mag,
+                place: props.place || 'Unknown',
+                time: props.time,                          // epoch ms
