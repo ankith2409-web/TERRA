@@ -93,3 +93,15 @@ const EarthquakeBackend = (function () {
                 clearTimeout(timer);
             });
     }
+
+    /** Single fetch attempt */
+    async function _fetchOnce() {
+        const response = await _fetchWithTimeout(CONFIG.url, CONFIG.requestTimeout);
+
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status + ' ' + response.statusText);
+        }
+
+        return response.json();
+    }
+
