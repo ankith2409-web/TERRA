@@ -81,3 +81,15 @@ const EarthquakeBackend = (function () {
             };
         });
     }
+       /** Fetch with a timeout (AbortController) */
+    function _fetchWithTimeout(url, timeoutMs) {
+        const controller = new AbortController();
+        const timer = setTimeout(function () {
+            controller.abort();
+        }, timeoutMs);
+
+        return fetch(url, { signal: controller.signal })
+            .finally(function () {
+                clearTimeout(timer);
+            });
+    }
