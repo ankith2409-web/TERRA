@@ -171,19 +171,6 @@ feature/data-processing
 feature/live-sync
 ```
 
----
-
-# 🔥 Future Improvements
-
-- Tsunami alerts
-- Volcano API integration
-- Historical earthquake replay
-- Regional filtering
-- Prediction analytics
-- WebSocket real-time updates
-
----
-
 # 🤝 Integration
 
 This module supplies processed earthquake data to:
