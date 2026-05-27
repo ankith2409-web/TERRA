@@ -68,3 +68,16 @@ const EarthquakeBackend = (function () {
                 magnitude: props.mag,
                 place: props.place || 'Unknown',
                 time: props.time,                          // epoch ms
+                 timeHuman: new Date(props.time).toLocaleString(),
+                updated: props.updated,
+                url: props.url || null,
+                tsunami: props.tsunami === 1,
+                significance: props.sig || 0,
+                type: props.type || 'earthquake',
+                title: props.title || '',
+                longitude: coords[0],
+                latitude: coords[1],
+                depth: coords[2],                          // km
+            };
+        });
+    }
