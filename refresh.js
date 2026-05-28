@@ -120,4 +120,15 @@ const EarthquakeBackend = (function () {
                     '[EarthquakeBackend] Attempt ' + attempt + ' failed:',
                     err.message
                 );
+                 // Don't wait after the last attempt
+                if (attempt < CONFIG.maxRetries) {
+                    await new Promise(function (resolve) {
+                        setTimeout(resolve, CONFIG.retryDelay);
+                    });
+                }
+            }
+        }
 
+        // All retries exhausted
+        throw lastError;
+    }
