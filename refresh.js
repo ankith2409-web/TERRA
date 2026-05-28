@@ -105,3 +105,19 @@ const EarthquakeBackend = (function () {
         return response.json();
     }
 
+     /** Fetch with retry logic */
+    async function _fetchWithRetry() {
+        let lastError = null;
+
+        for (let attempt = 1; attempt <= CONFIG.maxRetries; attempt++) {
+            try {
+                _emitStatus('fetching', 'Attempt ' + attempt + ' of ' + CONFIG.maxRetries);
+                const raw = await _fetchOnce();
+                return raw;                                // success — return immediately
+            } catch (err) {
+                lastError = err;
+                console.warn(
+                    '[EarthquakeBackend] Attempt ' + attempt + ' failed:',
+                    err.message
+                );
+
