@@ -132,3 +132,13 @@ const EarthquakeBackend = (function () {
         // All retries exhausted
         throw lastError;
     }
+      // ── Core Refresh Logic ──────────────────────────────────────
+
+    async function _refresh() {
+        // Guard: skip if a previous fetch is still in-flight
+        if (_isFetching) {
+            console.log('[EarthquakeBackend] Skipping — previous fetch still running.');
+            return;
+        }
+
+        _isFetching = true;
