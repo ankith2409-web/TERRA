@@ -157,3 +157,11 @@ const EarthquakeBackend = (function () {
                 '[EarthquakeBackend] ✓ ' + quakes.length + ' earthquakes at ' +
                 new Date().toLocaleTimeString()
             );
+         } catch (err) {
+            _consecutiveErrors++;
+            _emitStatus('error', err.message);
+            _notify(_onErrorCallbacks, {
+                error: err,
+                consecutiveErrors: _consecutiveErrors,
+                lastSuccess: _lastSuccessTime,
+            });
