@@ -142,3 +142,18 @@ const EarthquakeBackend = (function () {
         }
 
         _isFetching = true;
+         try {
+            const raw = await _fetchWithRetry();
+            const quakes = _parse(raw);
+
+            _lastData = quakes;
+            _lastSuccessTime = Date.now();
+            _consecutiveErrors = 0;
+
+            _emitStatus('success', 'Loaded ' + quakes.length + ' earthquakes');
+            _notify(_onUpdateCallbacks, quakes);
+
+            console.log(
+                '[EarthquakeBackend] ✓ ' + quakes.length + ' earthquakes at ' +
+                new Date().toLocaleTimeString()
+            );
