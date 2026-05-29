@@ -7,3 +7,8 @@ import Charts from './components/Charts';
 import Filters from './components/Filters';
 import SearchBar from './components/SearchBar';
 import LoadingSpinner from './components/LoadingSpinner';
+
+// Import CSS
+import './styles/dashboard.css';
+import './styles/sidebar.css';
+
