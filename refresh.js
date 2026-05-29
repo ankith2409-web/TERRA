@@ -222,3 +222,11 @@ const EarthquakeBackend = (function () {
                 _refresh();
             }
         },
+
+           /**
+         * Register a callback that fires every time new data arrives.
+         * @param {function} cb — receives an array of earthquake objects
+         */
+        onUpdate: function (cb) {
+            if (typeof cb === 'function') _onUpdateCallbacks.push(cb);
+        },
