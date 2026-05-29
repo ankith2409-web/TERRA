@@ -197,7 +197,7 @@ const EarthquakeBackend = (function () {
             // Then repeat on the configured interval
             _intervalId = setInterval(_refresh, CONFIG.refreshInterval);
         },
-        
+
          /**
          * Stop the auto-refresh loop.
          */
@@ -208,4 +208,17 @@ const EarthquakeBackend = (function () {
             _isRunning = false;
             _emitStatus('stopped', null);
             console.log('[EarthquakeBackend] Stopped.');
+        },
+
+          /**
+         * Force an immediate refresh (resets the timer).
+         */
+        forceRefresh: function () {
+            if (_isRunning) {
+                clearInterval(_intervalId);
+                _refresh();
+                _intervalId = setInterval(_refresh, CONFIG.refreshInterval);
+            } else {
+                _refresh();
+            }
         },
