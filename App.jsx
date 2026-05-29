@@ -19,4 +19,15 @@ import { mockEarthquakes } from './data/mockData';
 import EarthquakeCard from './components/EarthquakeCard';
 import RecentActivity from './components/RecentActivity';
 
+function App() {
+  // App-level Navigation and View state
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Filters State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [minMagnitude, setMinMagnitude] = useState(0);
+  const [maxDepth, setMaxDepth] = useState(300);
+  const [regionFilter, setRegionFilter] = useState('All');
 
