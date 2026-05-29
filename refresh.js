@@ -246,3 +246,14 @@ const EarthquakeBackend = (function () {
         onStatus: function (cb) {
             if (typeof cb === 'function') _onStatusCallbacks.push(cb);
         },
+
+         /**
+         * Get the most recently fetched earthquake data (or null).
+         */
+        getLastData: function () {
+            return _lastData;
+        },
+
+        /**
+         * Get backend status info.
+         */
