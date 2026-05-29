@@ -45,4 +45,68 @@ function App() {
     setMaxDepth(300);
     setRegionFilter('All');
   };
+  
+  // Filter Data
+  const filteredEarthquakes = mockEarthquakes.filter((eq) => {
+    const matchesSearch = eq.location.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          eq.region.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesMagnitude = eq.magnitude >= minMagnitude;
+    const matchesDepth = eq.depth <= maxDepth;
+    const matchesRegion = regionFilter === 'All' || eq.region === regionFilter;
 
+    return matchesSearch && matchesMagnitude && matchesDepth && matchesRegion;
+  });
+
+  const earthquakeCards = (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {filteredEarthquakes.map((eq) => (
+        <EarthquakeCard key={eq.id} earthquake={eq} />
+      ))}
+      {filteredEarthquakes.length === 0 && (
+        <div className="col-span-2 text-center py-10 font-mono text-slate-500 text-xs tracking-wider border border-dashed border-slate-900 rounded-lg">
+          --- SEISMIC FEED IS SILENT FOR CURRENT METRIC CALIBRATION ---
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <Dashboard
+      activeTab={activeTab}
+      isLoading={isLoading}
+      navbar={
+        <Navbar 
+          searchTerm={searchTerm} 
+          setSearchTerm={setSearchTerm} 
+          alertCount={filteredEarthquakes.filter(e => e.severity === 'critical').length} 
+        />
+      }
+      sidebar={
+        <Sidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          sidebarOpen={sidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+        />
+      }
+      stats={<StatsPanel earthquakes={filteredEarthquakes} />}
+      charts={<Charts earthquakes={filteredEarthquakes} />}
+      filters={
+        <Filters 
+          minMagnitude={minMagnitude} 
+          setMinMagnitude={setMinMagnitude} 
+          maxDepth={maxDepth} 
+          setMaxDepth={setMaxDepth} 
+          regionFilter={regionFilter} 
+          setRegionFilter={setRegionFilter} 
+          onReset={handleResetFilters} 
+        />
+      }
+      searchBar={<SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
+      cards={earthquakeCards}
+      activity={<RecentActivity earthquakes={filteredEarthquakes} />}
+    />
+  );
+}
+
+export default App;
