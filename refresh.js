@@ -165,3 +165,13 @@ const EarthquakeBackend = (function () {
                 consecutiveErrors: _consecutiveErrors,
                 lastSuccess: _lastSuccessTime,
             });
+
+             console.error(
+                '[EarthquakeBackend] ✗ Refresh failed (' +
+                _consecutiveErrors + ' in a row):',
+                err.message
+            );
+        } finally {
+            _isFetching = false;
+        }
+    }
