@@ -37,3 +37,18 @@ const Dashboard = ({
                 <>
 		  {/* Stats Summary Panel */}
                   {stats}
+
+		    {/* Primary Data Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left & Middle Column: Filters, Search, Cards Grid */}
+                    <div className="lg:col-span-2 space-y-6">
+                      <div className="glass-panel p-4 rounded-xl border border-slate-800 space-y-4">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <h2 className="text-lg font-mono font-bold tracking-wider text-cyan-400 flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+                            SEISMIC TELEMETRY STREAM
+                          </h2>
+                          {searchBar}
+                        </div>
+                        {filters}
+                      </div>
