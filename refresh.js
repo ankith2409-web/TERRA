@@ -175,3 +175,25 @@ const EarthquakeBackend = (function () {
             _isFetching = false;
         }
     }
+     // ── Public API ──────────────────────────────────────────────
+
+    return {
+        /**
+         * Start the auto-refresh loop.
+         * Fetches immediately, then every 20 seconds.
+         */
+        start: function () {
+            if (_isRunning) {
+                console.warn('[EarthquakeBackend] Already running.');
+                return;
+            }
+            _isRunning = true;
+            _emitStatus('started', 'Refresh every ' + (CONFIG.refreshInterval / 1000) + 's');
+            console.log('[EarthquakeBackend] Started — refreshing every ' + (CONFIG.refreshInterval / 1000) + 's');
+
+            // Fetch right away
+            _refresh();
+
+            // Then repeat on the configured interval
+            _intervalId = setInterval(_refresh, CONFIG.refreshInterval);
+        },
