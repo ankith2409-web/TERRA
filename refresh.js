@@ -257,3 +257,14 @@ const EarthquakeBackend = (function () {
         /**
          * Get backend status info.
          */
+        getStatus: function () {
+            return {
+                isRunning: _isRunning,
+                isFetching: _isFetching,
+                lastSuccessTime: _lastSuccessTime,
+                consecutiveErrors: _consecutiveErrors,
+                cachedCount: _lastData ? _lastData.length : 0,
+            };
+        },
+    };
+})();
