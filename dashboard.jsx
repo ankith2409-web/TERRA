@@ -56,3 +56,12 @@ const Dashboard = ({
 		      {/* Earthquake cards container */}
                       {cards}
                     </div>
+
+		    {/* Right Column: Live Feed / Activity */}
+                    <div className="lg:col-span-1 space-y-6">
+                      {activity}
+                    </div>
+                  </div>
+                </>
+              )}
+
