@@ -238,3 +238,11 @@ const EarthquakeBackend = (function () {
         onError: function (cb) {
             if (typeof cb === 'function') _onErrorCallbacks.push(cb);
         },
+
+         /**
+         * Register a callback that fires on status changes.
+         * @param {function} cb — receives { status, detail, timestamp }
+         */
+        onStatus: function (cb) {
+            if (typeof cb === 'function') _onStatusCallbacks.push(cb);
+        },
