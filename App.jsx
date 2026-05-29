@@ -12,3 +12,6 @@ import LoadingSpinner from './components/LoadingSpinner';
 import './styles/dashboard.css';
 import './styles/sidebar.css';
 
+// Mock Data
+import { mockEarthquakes } from './data/mockData';
+
