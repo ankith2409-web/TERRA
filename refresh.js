@@ -230,3 +230,11 @@ const EarthquakeBackend = (function () {
         onUpdate: function (cb) {
             if (typeof cb === 'function') _onUpdateCallbacks.push(cb);
         },
+
+         /**
+         * Register a callback that fires on fetch errors.
+         * @param {function} cb — receives { error, consecutiveErrors, lastSuccess }
+         */
+        onError: function (cb) {
+            if (typeof cb === 'function') _onErrorCallbacks.push(cb);
+        },
