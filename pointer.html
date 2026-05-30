@@ -119,4 +119,31 @@
             justify-content: space-between;
             align-items: center;
         }
+        .stat-label {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
 
+        .stat-val {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .stat-val.pulse {
+            color: var(--color-light);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .stat-val.pulse::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--color-light);
+            display: inline-block;
+            box-shadow: 0 0 6px var(--color-light);
+            animation: pulse-glow 1.5s ease-in-out infinite;
+        }
