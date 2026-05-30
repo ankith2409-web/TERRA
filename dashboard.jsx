@@ -67,4 +67,12 @@ const Dashboard = ({
               
 	      {activeTab === 'analytics' && (
                 <div className="space-y-6">
-
+                   {/* Full size analytics views */}
+                  <div className="glass-panel p-6 rounded-xl border border-slate-800">
+                    <h2 className="text-xl font-mono font-bold text-cyan-400 mb-6 tracking-widest border-b border-cyan-920 pb-2">
+                      ANALYTICAL TELEMETRY DECK
+                    </h2>
+                    {charts}
+                  </div>
+                </div>
+              )}
