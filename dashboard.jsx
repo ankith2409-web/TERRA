@@ -64,4 +64,7 @@ const Dashboard = ({
                   </div>
                 </>
               )}
+              
+	      {activeTab === 'analytics' && (
+                <div className="space-y-6">
 
