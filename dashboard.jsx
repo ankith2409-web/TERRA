@@ -91,3 +91,4 @@ const Dashboard = ({
                 </div>
               )}
 
+	       {activeTab === 'settings' && (
