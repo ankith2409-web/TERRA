@@ -93,3 +93,30 @@
             color: var(--text-muted);
             margin-top: 0.3rem;
         }
+         /* Telemetry Stats Panel (Top Right) */
+        .stats-panel {
+            top: 2rem;
+            right: 2rem;
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            pointer-events: auto;
+            box-shadow: var(--glass-shadow);
+            animation: slideDown 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            min-width: 240px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
