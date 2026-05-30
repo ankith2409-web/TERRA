@@ -48,3 +48,17 @@
             height: 100vh;
             z-index: 1;
         }
+         /* UI Overlays */
+        .overlay {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* Header UI */
+        header {
+            top: 2rem;
+            left: 2rem;
+            pointer-events: auto;
+            animation: slideDown 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
