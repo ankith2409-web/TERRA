@@ -24,3 +24,5 @@
   --color-cyber-yellow: #f59e0b;
   --color-cyber-green: #10b981;
 
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
