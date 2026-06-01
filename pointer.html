@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERRA // Seismic Activity Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="preload" href="https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg" as="image">
+    <style>
+        :root {
+            --bg: #030307;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            
+            --glass-bg: rgba(10, 10, 18, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+            
+            --color-minor: #00e5ff;
+            --color-light: #00e676;
+            --color-moderate: #ffb300;
+            --color-severe: #ff1744;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text-primary);
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #c {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+         /* UI Overlays */
+        .overlay {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* Header UI */
+        header {
+            top: 2rem;
+            left: 2rem;
+            pointer-events: auto;
+            animation: slideDown 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+         .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-mark {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--color-severe);
+            box-shadow: 0 0 12px var(--color-severe);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+         .title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+            text-transform: uppercase;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+        }
+
+        .sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+         /* Telemetry Stats Panel (Top Right) */
+        .stats-panel {
+            top: 2rem;
+            right: 2rem;
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            pointer-events: auto;
+            box-shadow: var(--glass-shadow);
+            animation: slideDown 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            min-width: 240px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stat-label {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-val {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .stat-val.pulse {
+            color: var(--color-light);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .stat-val.pulse::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--color-light);
+            display: inline-block;
+            box-shadow: 0 0 6px var(--color-light);
+            animation: pulse-glow 1.5s ease-in-out infinite;
+        }
+         /* Sidebar - Recent Events (Left) */
+        #sidebar {
+            top: 8rem;
+            left: 2rem;
+            width: 320px;
+            height: calc(100vh - 10rem);
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            pointer-events: auto;
+            box-shadow: var(--glass-shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+            animation: slideRight 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        #sidebar.collapsed {
+            transform: translateX(-360px);
+            opacity: 0.3;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 50%;
+            right: -36px;
+            width: 36px;
+            height: 60px;
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-left: none;
+            border-radius: 0 10px 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 6px 0 16px rgba(0, 0, 0, 0.3);
+            color: var(--text-primary);
+            transition: background 0.3s;
+        }
+         .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 0.75rem;
+        }
+
+        .sidebar-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+        }
+
+        .quake-count-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+        }   
+        /* Filter Controls */
+        .filters {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            color: white;
+            font-family: inherit;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+         .filter-buttons {
+            display: flex;
+            gap: 0.3rem;
+        }
+
+        .filter-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            padding: 0.35rem 0.2rem;
+            font-size: 0.65rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .filter-btn.active {
+            background: var(--text-primary);
+            color: var(--bg);
+            border-color: var(--text-primary);
+        }
+
+        .filter-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+         /* Quake List Container */
+        .quake-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding-right: 0.25rem;
+        }
+          /* Custom Scrollbar */
+        .quake-list::-webkit-scrollbar,
+        #detail-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .quake-list::-webkit-scrollbar-track,
+        #detail-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .quake-list::-webkit-scrollbar-thumb,
+        #detail-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+        }
+
+        .quake-list::-webkit-scrollbar-thumb:hover,
+        #detail-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+        
+        /* Quake Card Item */
+        .quake-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.75rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+         .quake-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateX(4px);
+        }
+
+        .quake-card.selected {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+        }
+          .quake-mag-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        }
+          .quake-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .quake-card-place {
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-primary);
+        }
+
+        .quake-card-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+            display: flex;
+            justify-content: space-between;
+        }
+         /* Glassmorphic Detail Panel (Right) */
+        #detail-panel {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            width: 380px;
+            max-height: calc(100vh - 4rem);
+            background: rgba(12, 12, 22, 0.55);
+            -webkit-backdrop-filter: blur(28px);
+            backdrop-filter: blur(28px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: var(--glass-shadow);
+            transform: translateX(430px);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            color: var(--text-primary);
+            overflow-y: auto;
+            pointer-events: auto;
+        }
+
+        #detail-panel.open {
+            transform: translateX(0);
+        }
+         .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .detail-meta-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+        }
+
+        .detail-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+            padding: 0.2rem;
+        }
+
+        .detail-close:hover {
+            color: var(--text-primary);
+        }
+         .hero-display {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .hero-mag-badge {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .hero-mag-label {
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.7;
+        }
+        .hero-mag-val {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .hero-details {
+            flex: 1;
+        }
+
+        .hero-place {
+            font-size: 1.15rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .hero-time {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.4rem;
+        }
+
+        /* Detail telemetry grid */
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1.25rem 0;
+        }
+         .tel-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .tel-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+
+        .tel-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        /* Intensity description container */
+        .intensity-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+         .intensity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .intensity-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+
+        .intensity-badge {
+            padding: 0.15rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .intensity-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .intensity-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
