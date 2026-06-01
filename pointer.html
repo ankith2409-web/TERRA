@@ -284,3 +284,24 @@
             gap: 0.5rem;
             padding-right: 0.25rem;
         }
+          /* Custom Scrollbar */
+        .quake-list::-webkit-scrollbar,
+        #detail-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .quake-list::-webkit-scrollbar-track,
+        #detail-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .quake-list::-webkit-scrollbar-thumb,
+        #detail-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+        }
+
+        .quake-list::-webkit-scrollbar-thumb:hover,
+        #detail-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
