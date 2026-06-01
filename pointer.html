@@ -392,3 +392,31 @@
         #detail-panel.open {
             transform: translateX(0);
         }
+         .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .detail-meta-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+        }
+
+        .detail-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+            padding: 0.2rem;
+        }
+
+        .detail-close:hover {
+            color: var(--text-primary);
+        }
+
