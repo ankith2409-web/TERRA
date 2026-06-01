@@ -265,3 +265,13 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
+
+        .filter-btn.active {
+            background: var(--text-primary);
+            color: var(--bg);
+            border-color: var(--text-primary);
+        }
+
+        .filter-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
