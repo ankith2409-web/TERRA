@@ -537,3 +537,36 @@
             color: var(--text-secondary);
             line-height: 1.4;
         }
+                /* Significance bar */
+        .metric-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .progress-bar-bg {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--color-minor), var(--color-severe));
+            width: 0%;
+            transition: width 0.8s ease-out;
+        }
+
