@@ -50,3 +50,14 @@ const Charts = ({ earthquakes = [] }) => {
   }));
   const COLORS = ['#06b6d4', '#3b82f6', '#ef4444', '#f59e0b', '#10b981'];
 
+  // 3. Data for Line Chart (chronological activity)
+  const lineData = [...earthquakes]
+    .sort((a, b) => new Date(a.time) - new Date(b.time))
+    .map(eq => ({
+      time: new Date(eq.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      Magnitude: eq.magnitude,
+      Depth: eq.depth,
+      Location: eq.location
+    }));
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
