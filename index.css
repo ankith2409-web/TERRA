@@ -113,3 +113,6 @@ h2 {
 ::-webkit-scrollbar-thumb:hover {
   background: #3b82f6;
 }
+p {
+  margin: 0;
+}
