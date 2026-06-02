@@ -38,3 +38,15 @@ const Charts = ({ earthquakes = [] }) => {
       Magnitude: eq.magnitude,
       Depth: eq.depth
     }));
+
+  // 2. Data for Region Distribution Pie Chart
+  const regionCounts = earthquakes.reduce((acc, eq) => {
+    acc[eq.region] = (acc[eq.region] || 0) + 1;
+    return acc;
+  }, {});
+  const pieData = Object.keys(regionCounts).map(region => ({
+    name: region,
+    value: regionCounts[region]
+  }));
+  const COLORS = ['#06b6d4', '#3b82f6', '#ef4444', '#f59e0b', '#10b981'];
+
