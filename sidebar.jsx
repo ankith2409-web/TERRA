@@ -35,3 +35,14 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
             </span>
           )}
         </div>
+	
+	 {/* Toggle Button */}
+        {sidebarOpen && (
+          <button 
+            onClick={() => setSidebarOpen(false)}
+            className="p-1 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-colors"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        )}
+      </div>
