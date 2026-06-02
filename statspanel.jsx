@@ -79,3 +79,20 @@ const StatsPanel = ({ earthquakes = [] }) => {
               <span className="font-mono text-xs text-slate-400 tracking-widest">{item.label}</span>
               <Icon size={18} />
             </div>
+	   
+	     {/* Content */}
+            <div className="mt-2">
+              <span className="text-3xl font-mono font-bold tracking-tight block">
+                {item.value}
+              </span>
+              <span className="text-[10px] font-mono text-slate-500 block uppercase mt-1">
+                {item.description}
+              </span>
+            </div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
+};
+export default StatsPanel;
