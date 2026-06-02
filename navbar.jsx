@@ -29,3 +29,10 @@ const Navbar = ({ searchTerm, setSearchTerm, alertCount = 3 }) => {
         </div>
       </div>
 
+      {/* Utilities */}
+      <div className="flex items-center gap-4 md:gap-6">
+        {/* System Time Counter */}
+        <div className="hidden lg:flex flex-col items-end font-mono">
+          <span className="text-[10px] text-slate-500 uppercase tracking-wider">SYSTEM_COORDINATE_TIME</span>
+          <span className="text-xs text-cyan-400 font-bold">{systemTime}</span>
+        </div>
