@@ -99,3 +99,29 @@ const Charts = ({ earthquakes = [] }) => {
           )}
         </div>
       </div>
+
+      {/* Bar Chart - Magnitude Comparisons */}
+      <div className="glass-panel p-4 rounded-xl border border-slate-800/80">
+        <h3 className="font-mono text-sm text-cyan-400 font-bold mb-4 tracking-wider uppercase">
+          SEISMIC INTENSITY COMPARATOR (BAR)
+        </h3>
+        <div className="h-64 w-full">
+          {barData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(51, 65, 85, 0.2)" />
+                <XAxis dataKey="name" stroke="#64748b" tick={{ fill: '#64748b', fontSize: 9, fontFamily: 'monospace' }} />
+                <YAxis domain={[0, 9]} stroke="#64748b" tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'monospace' }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="Magnitude" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Magnitude (Mw)">
+                  {barData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.Magnitude > 6.0 ? '#ef4444' : '#3b82f6'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-slate-500 font-mono text-sm">NO DATA IN MONITORING RANGE</div>
+          )}
+        </div>
+      </div>
