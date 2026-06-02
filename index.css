@@ -82,3 +82,11 @@ body {
   width: 6px;
   height: 6px;
 }
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+::-webkit-scrollbar-track {
+  background: #020617;
+}
