@@ -61,3 +61,41 @@ const Charts = ({ earthquakes = [] }) => {
     }));
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+       {/* Line Chart - Tectonic Activity Trend */}
+      <div className="glass-panel p-4 rounded-xl border border-slate-800/80 md:col-span-2">
+        <h3 className="font-mono text-sm text-cyan-400 font-bold mb-4 tracking-wider uppercase">
+          TECTONIC FREQUENCY &amp; FLUX (LINE)
+        </h3>
+        <div className="h-64 w-full">
+          {lineData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={lineData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(51, 65, 85, 0.2)" />
+                <XAxis dataKey="time" stroke="#64748b" tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'monospace' }} />
+                <YAxis domain={[0, 9]} stroke="#64748b" tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'monospace' }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontFamily: 'monospace', fontSize: 10 }} />
+                <Line
+                  type="monotone"
+                  dataKey="Magnitude"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  activeDot={{ r: 6 }}
+                  name="Magnitude (Mw)"
+		  dot={{ r: 3, fill: '#ef4444' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="Depth"
+                  stroke="#06b6d4"
+                  strokeWidth={1.5}
+                  name="Depth (km)"
+                  dot={{ r: 2, fill: '#06b6d4' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-slate-500 font-mono text-sm">NO DATA IN MONITORING RANGE</div>
+          )}
+        </div>
+      </div>
