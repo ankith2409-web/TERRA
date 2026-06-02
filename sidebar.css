@@ -33,3 +33,12 @@
   width: 3px;
 }
 
+.sidebar-glow-btn {
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
+}
+.sidebar-glow-btn:hover {
+  border-color: rgba(6, 182, 212, 0.8);
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+  color: #06b6d4;
+}
