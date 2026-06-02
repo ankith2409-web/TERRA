@@ -125,3 +125,39 @@ const Charts = ({ earthquakes = [] }) => {
           )}
         </div>
       </div>
+
+      {/* Pie Chart - Regional Distribution */}
+      <div className="glass-panel p-4 rounded-xl border border-slate-800/80">
+        <h3 className="font-mono text-sm text-cyan-400 font-bold mb-4 tracking-wider uppercase">
+          ZONE DISTRIBUTOR (PIE)
+        </h3>
+        <div className="h-64 w-full flex items-center justify-center">
+          {pieData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontFamily: 'monospace', fontSize: 9 }} layout="vertical" align="right" verticalAlign="middle" />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-slate-500 font-mono text-sm">NO DATA IN MONITORING RANGE</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+export default Charts;	
