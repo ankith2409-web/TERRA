@@ -91,3 +91,12 @@ export const mockEarthquakes = [
     severity: "minor",
     region: "Americas"
   },
+  {
+    id: "eq-2026-011",
+    location: "Sichuan, China",
+    magnitude: 5.8,
+    depth: 15,
+    time: "2026-05-28T15:20:30Z",
+    severity: "major",
+    region: "Asia-Pacific"
+  },
