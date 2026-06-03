@@ -28,3 +28,12 @@ export const mockEarthquakes = [
     severity: "major",
     region: "Americas"
   },
+  {
+    id: "eq-2026-004",
+    location: "Aegean Sea, Greece",
+    magnitude: 5.1,
+    depth: 12,
+    time: "2026-05-29T09:05:00Z",
+    severity: "moderate",
+    region: "Europe/Africa"
+  },
