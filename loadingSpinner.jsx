@@ -16,3 +16,27 @@ const LoadingSpinner = () => {
           animate={{ rotate: -360 }}
           transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
         />
+	{/* Pulse Dot in Center */}
+        <motion.div
+          className="absolute inset-8 bg-cyan-400 rounded-full"
+          animate={{
+            scale: [0.8, 1.2, 0.8],
+            opacity: [0.5, 1, 0.5]
+          }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+      <div className="text-center">
+        <motion.h3
+          className="text-sm uppercase tracking-[0.25em] text-cyan-300 font-bold mb-1"
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          Connecting to Seismic Feed...
+        </motion.h3>
+        <span className="text-xs text-slate-500">SYS_CHECK: OK // DEPTH_INDEXING: SYNCED</span>
+      </div>
+    </div>
+  );
+};
+export default LoadingSpinner;
