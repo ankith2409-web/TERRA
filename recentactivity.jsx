@@ -15,3 +15,23 @@ const RecentActivity = ({ earthquakes = [] }) => {
           STREAM: LIVE
         </span>
       </div>
+
+       {/* Terminal log panel */}
+      <div className="flex-1 overflow-y-auto space-y-2 activity-feed-scroll pr-1 font-mono text-[10px]">
+        <AnimatePresence initial={false}>
+          {earthquakes.map((eq, idx) => {
+            const timeStr = new Date(eq.time).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            });
+            return (
+              <motion.div
+                key={eq.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="p-2.5 bg-slate-950/40 rounded border border-slate-900/60 hover:border-slate-800/80 flex items-start justify-between gap-3 group transition-colors"
+              >
+                <div className="flex items-start gap-2.5 min-w-0">
