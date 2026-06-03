@@ -82,3 +82,12 @@ export const mockEarthquakes = [
     severity: "major",
     region: "Asia-Pacific"
   },
+  {
+    id: "eq-2026-010",
+    location: "Anchorage, Alaska, USA",
+    magnitude: 3.9,
+    depth: 42,
+    time: "2026-05-28T18:40:00Z",
+    severity: "minor",
+    region: "Americas"
+  },
