@@ -19,3 +19,12 @@ export const mockEarthquakes = [
     severity: "moderate",
     region: "Americas"
   },
+  {
+    id: "eq-2026-003",
+    location: "Valparaiso, Chile",
+    magnitude: 6.2,
+    depth: 35,
+    time: "2026-05-29T11:45:30Z",
+    severity: "major",
+    region: "Americas"
+  },
