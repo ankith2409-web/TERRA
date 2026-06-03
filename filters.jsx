@@ -57,3 +57,33 @@ const Filters = ({
           <span>300 km</span>
         </div>
       </div>
+
+       {/* Region & Reset Filter Row */}
+      <div className="space-y-2">
+        <span className="text-slate-400 tracking-wider block">GEOGRAPHIC REGION</span>
+        <div className="flex gap-2">
+          <select
+            value={regionFilter}
+            onChange={(e) => setRegionFilter(e.target.value)}
+            className="flex-1 bg-slate-900/60 border border-slate-800 rounded-lg p-2 text-slate-100 outline-none focus:border-cyan-500/50 tracking-wider uppercase transition-colors"
+          >
+            {regions.map((reg) => (
+              <option key={reg} value={reg} className="bg-slate-950 text-slate-300">
+                {reg === 'All' ? 'ALL REGIONS' : reg}
+              </option>
+            ))}
+          </select>
+          
+          <button
+            onClick={onReset}
+            className="px-3 bg-slate-900 border border-slate-800 text-slate-400 hover:text-red-400 hover:border-red-500/30 rounded-lg flex items-center justify-center transition-all duration-200"
+            title="Reset Filters"
+          >
+            <RotateCcw size={14} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+export default Filters;
