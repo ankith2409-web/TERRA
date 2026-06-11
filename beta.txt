@@ -1,0 +1,5 @@
+This branch adds earthquake markers to the globe.
+Markers are sized by magnitude and colored by depth.
+Red = shallow, Orange = medium, Yellow = deep.
+Each marker represents an earthquake event.
+
