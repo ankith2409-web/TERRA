@@ -27,3 +27,4 @@ export default function GlobeComponent() {
 }
 
 // Step 1: Globe setup started
+function rotateGlobe() { return true; }
