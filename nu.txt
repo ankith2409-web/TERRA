@@ -1,0 +1,7 @@
+This branch adds user controls to the globe.
+Features include:
+- Zoom in/out
+- Drag to rotate
+- Reset view
+Controls improve interactivity and usability.
+
