@@ -1,3 +1,4 @@
 This branch adds visual effects to the globe.
 Added pulsing marker animation.
 Atmosphere glow effect added.
+Starfield background effect added.
