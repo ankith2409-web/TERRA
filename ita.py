@@ -21,3 +21,4 @@ if __name__ == "__main__":
 # ita branch complete
 # added error handling for missing ita.txt
 # adjusted tooltip print format
+# comments added for readability
