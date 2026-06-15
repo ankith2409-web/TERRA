@@ -3,3 +3,4 @@ Added pulsing marker animation.
 Atmosphere glow effect added.
 Starfield background effect added.
 Cinematic visual effects applied.
+Visual effects enhance globe aesthetics.
