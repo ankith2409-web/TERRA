@@ -26,3 +26,4 @@ if __name__ == "__main__":
     reset_view()
 
 # comments added for readability
+# added error handling for missing nu.txt
