@@ -7,3 +7,4 @@ Controls improve interactivity and usability.
 
 Zoom in/out control added.
 Drag rotation control added.
+Reset view option added.
