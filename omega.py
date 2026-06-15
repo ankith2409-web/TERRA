@@ -30,3 +30,4 @@ if __name__ == "__main__":
 # added error handling for missing omega.txt
 # adjusted atmosphere glow intensity
 # cleaned up code structure
+# added confirmation messages for effects
