@@ -1,3 +1,4 @@
 This branch (ita) focuses on interactive tooltips and controls.
 Added hover tooltips for markers.
 Enabled zoom and drag controls.
+Bangalore, Magnitude 5.6, Depth 40km
