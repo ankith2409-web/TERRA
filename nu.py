@@ -25,3 +25,4 @@ if __name__ == "__main__":
     enable_drag()
     reset_view()
 
+# comments added for readability
