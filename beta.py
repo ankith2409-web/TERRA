@@ -28,3 +28,4 @@ if __name__ == "__main__":
     except FileNotFoundError:
         print("beta.txt not found")
 
+# improved marker processing
