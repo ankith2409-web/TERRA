@@ -3,3 +3,4 @@ Markers are sized by magnitude and colored by depth.
 Red = shallow, Orange = medium, Yellow = deep.
 Each marker represents an earthquake event.
 
+Bangalore, Magnitude 5.6, Depth 40km
