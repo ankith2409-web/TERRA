@@ -83,18 +83,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Create card
                 const card = document.createElement('div');
                 card.className = 'quake-card';
-                card.style.display = 'flex';
-                card.style.alignItems = 'center';
-                card.style.gap = '10px';
-                card.style.padding = '10px';
-                card.style.borderBottom = '1px solid #ccc';
+                if (quake.magnitude >= 5.0) {
+                    card.setAttribute('data-severity', 'strong');
+                } else if (quake.magnitude >= 3.0) {
+                    card.setAttribute('data-severity', 'moderate');
+                } else {
+                    card.setAttribute('data-severity', 'minor');
+                }
                 
                 const magBadge = document.createElement('div');
                 magBadge.className = 'quake-mag-badge';
                 magBadge.textContent = quake.magnitude ? quake.magnitude.toFixed(1) : 'N/A';
-                magBadge.style.fontWeight = 'bold';
-                magBadge.style.fontSize = '1.2em';
-                magBadge.style.minWidth = '40px';
                 
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'quake-card-info';
@@ -102,13 +101,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const placeEl = document.createElement('div');
                 placeEl.className = 'quake-card-place';
                 placeEl.textContent = quake.place;
-                placeEl.style.fontWeight = 'bold';
                 
                 const metaEl = document.createElement('div');
                 metaEl.className = 'quake-card-meta';
                 metaEl.innerHTML = `<span>${quake.timeHuman}</span> | <span>Depth: ${quake.depth} km</span>`;
-                metaEl.style.fontSize = '0.85em';
-                metaEl.style.color = '#666';
                 
                 infoDiv.appendChild(placeEl);
                 infoDiv.appendChild(metaEl);
