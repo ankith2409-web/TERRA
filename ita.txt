@@ -1,3 +1,11 @@
 This branch (ita) focuses on interactive tooltips and controls.
 Added hover tooltips for markers.
 Enabled zoom and drag controls.
+Bangalore, Magnitude 5.6, Depth 40km
+Tokyo, Magnitude 6.2, Depth 30km
+Tooltips improve usability and user understanding.
+Sydney, Magnitude 4.8, Depth 20km
+Sydney, Magnitude 4.8, Depth 20km
+San Francisco, Magnitude 7.1, Depth 10km
+Tooltips improve usability and user understanding.
+ITA branch complete with multiple tooltips.
