@@ -268,3 +268,11 @@
                 earthMat.needsUpdate = true;
             });
 
+            // 3) Specular map – shiny oceans
+            tl.load('https://unpkg.com/three-globe/example/img/earth-water.png', tex => {
+                earthMat.specularMap = tex;
+                earthMat.shininess = 40;
+                earthMat.specular.set(0x555555);
+                earthMat.needsUpdate = true;
+            });
+
