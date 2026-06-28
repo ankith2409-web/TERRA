@@ -243,4 +243,9 @@
             // ── Earth ──
             const R = 10;
             const earthGeo = new THREE.SphereGeometry(R, 64, 64);
-
+// Start with a dark blue placeholder so the globe is visible instantly
+            const earthMat = new THREE.MeshPhongMaterial({
+                color: 0x1a3a5c,
+                shininess: 25,
+                specular: new THREE.Color(0x333333),
+            });
