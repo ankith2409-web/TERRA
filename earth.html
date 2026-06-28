@@ -251,3 +251,6 @@
             });            const earth = new THREE.Mesh(earthGeo, earthMat);
             earth.rotation.z = 23.5 * Math.PI / 180;
             scene.add(earth);
+            // Load textures progressively (main texture first, extras after)
+            const tl = new THREE.TextureLoader();
+
