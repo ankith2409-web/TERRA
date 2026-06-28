@@ -261,3 +261,10 @@
                 earthMat.needsUpdate = true;
             });
 
+            // 2) Bump – adds terrain depth
+            tl.load('https://unpkg.com/three-globe/example/img/earth-topology.png', tex => {
+                earthMat.bumpMap = tex;
+                earthMat.bumpScale = 0.08;
+                earthMat.needsUpdate = true;
+            });
+
