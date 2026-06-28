@@ -292,3 +292,29 @@
                 cloudMat.needsUpdate = true;
             });
 
+            // ── Atmosphere glow (simple back-side Fresnel) ──
+            const atmosMat = new THREE.ShaderMaterial({
+                vertexShader: `
+                varying vec3 vNorm;
+                varying vec3 vWorldPos;
+                void main(){
+                    vNorm = normalize(normalMatrix * normal);
+                    vWorldPos = (modelMatrix * vec4(position,1.0)).xyz;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+                }`,
+                fragmentShader: `
+                varying vec3 vNorm;
+                varying vec3 vWorldPos;
+                void main(){
+                    vec3 vd = normalize(cameraPosition - vWorldPos);
+                    float f = pow(1.0 - dot(vd, vNorm), 3.0);
+                    gl_FragColor = vec4(0.25, 0.55, 1.0, f * 0.55);
+                }`,
+                transparent: true, side: THREE.BackSide,
+                depthWrite: false, blending: THREE.AdditiveBlending,
+            });
+            const atmos = new THREE.Mesh(
+                new THREE.SphereGeometry(R + 0.5, 48, 48), atmosMat
+            );
+            scene.add(atmos);
+
