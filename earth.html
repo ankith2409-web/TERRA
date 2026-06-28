@@ -224,4 +224,14 @@
             ctrl.zoomSpeed = 0.6;
             ctrl.autoRotate = true;
             ctrl.autoRotateSpeed = 0.35;
-
+// ── Stars (lightweight) ──
+            const STAR_COUNT = 4000;
+            const sp = new Float32Array(STAR_COUNT * 3);
+            for (let i = 0; i < STAR_COUNT * 3; i += 3) {
+                const r = 300 + Math.random() * 500;
+                const th = Math.random() * Math.PI * 2;
+                const ph = Math.acos(2 * Math.random() - 1);
+                sp[i] = r * Math.sin(ph) * Math.cos(th);
+                sp[i + 1] = r * Math.sin(ph) * Math.sin(th);
+                sp[i + 2] = r * Math.cos(ph);
+            }
