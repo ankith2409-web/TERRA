@@ -1,132 +1,1760 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Live earthquake monitoring dashboard with auto-refreshing seismic data from USGS.">
-    <title>Terra — Live Earthquake Monitor</title>
+    <meta name="description" content="Live 3D WebGL earthquake monitoring dashboard with auto-refreshing seismic data from USGS.">
+    <title>Terra — Live 3D Earthquake Monitor</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="preload" href="https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg" as="image">
+    <style>
+        :root {
+            --bg: #030307;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            
+            --glass-bg: rgba(10, 10, 18, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+            
+            --color-minor: #00e5ff;
+            --color-light: #00e676;
+            --color-moderate: #ffb300;
+            --color-severe: #ff1744;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text-primary);
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #c {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+         /* UI Overlays */
+        .overlay {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* Header UI */
+        header {
+            top: 2rem;
+            left: 2rem;
+            pointer-events: auto;
+            animation: slideDown 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+         .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-mark {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--color-severe);
+            box-shadow: 0 0 12px var(--color-severe);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+         .title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+            text-transform: uppercase;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+        }
+
+        .sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+         /* Telemetry Stats Panel (Top Right) */
+        .stats-panel {
+            top: 2rem;
+            right: 2rem;
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            pointer-events: auto;
+            box-shadow: var(--glass-shadow);
+            animation: slideDown 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            min-width: 240px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stat-label {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-val {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .stat-val.pulse {
+            color: var(--color-light);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .stat-val.pulse::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--color-light);
+            display: inline-block;
+            box-shadow: 0 0 6px var(--color-light);
+            animation: pulse-glow 1.5s ease-in-out infinite;
+        }
+         /* Sidebar - Recent Events (Left) */
+        #sidebar {
+            top: 8rem;
+            left: 2rem;
+            width: 320px;
+            height: calc(100vh - 10rem);
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            pointer-events: auto;
+            box-shadow: var(--glass-shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+            animation: slideRight 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        #sidebar.collapsed {
+            transform: translateX(-360px);
+            opacity: 0.3;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 50%;
+            right: -36px;
+            width: 36px;
+            height: 60px;
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-left: none;
+            border-radius: 0 10px 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 6px 0 16px rgba(0, 0, 0, 0.3);
+            color: var(--text-primary);
+            transition: background 0.3s;
+        }
+         .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 0.75rem;
+        }
+
+        .sidebar-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+        }
+
+        .quake-count-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+        }   
+        /* Filter Controls */
+        .filters {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            color: white;
+            font-family: inherit;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+         .filter-buttons {
+            display: flex;
+            gap: 0.3rem;
+        }
+
+        .filter-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            padding: 0.35rem 0.2rem;
+            font-size: 0.65rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .filter-btn.active {
+            background: var(--text-primary);
+            color: var(--bg);
+            border-color: var(--text-primary);
+        }
+
+        .filter-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+         /* Quake List Container */
+        .quake-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding-right: 0.25rem;
+        }
+          /* Custom Scrollbar */
+        .quake-list::-webkit-scrollbar,
+        #detail-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .quake-list::-webkit-scrollbar-track,
+        #detail-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .quake-list::-webkit-scrollbar-thumb,
+        #detail-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+        }
+
+        .quake-list::-webkit-scrollbar-thumb:hover,
+        #detail-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.35);
+            border-radius: 10px;
+        }
+        
+        /* Quake Card Item */
+        .quake-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.75rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+         .quake-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateX(4px);
+        }
+
+        .quake-card.selected {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+        }
+          .quake-mag-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        }
+          .quake-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .quake-card-place {
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-primary);
+        }
+
+        .quake-card-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+            display: flex;
+            justify-content: space-between;
+        }
+         /* Glassmorphic Detail Panel (Right) */
+        #detail-panel {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            width: 380px;
+            max-height: calc(100vh - 4rem);
+            background: rgba(12, 12, 22, 0.55);
+            -webkit-backdrop-filter: blur(28px);
+            backdrop-filter: blur(28px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: var(--glass-shadow);
+            transform: translateX(430px);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            color: var(--text-primary);
+            overflow-y: auto;
+            pointer-events: auto;
+        }
+
+        #detail-panel.open {
+            transform: translateX(0);
+        }
+         .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .detail-meta-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+        }
+
+        .detail-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+            padding: 0.2rem;
+        }
+
+        .detail-close:hover {
+            color: var(--text-primary);
+        }
+         .hero-display {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .hero-mag-badge {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .hero-mag-label {
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.7;
+        }
+        .hero-mag-val {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .hero-details {
+            flex: 1;
+        }
+
+        .hero-place {
+            font-size: 1.15rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .hero-time {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.4rem;
+        }
+
+        /* Detail telemetry grid */
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1.25rem 0;
+        }
+         .tel-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .tel-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+
+        .tel-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        /* Intensity description container */
+        .intensity-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+         .intensity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .intensity-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+
+        .intensity-badge {
+            padding: 0.15rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .intensity-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .intensity-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+                /* Significance bar */
+        .metric-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .progress-bar-bg {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--color-minor), var(--color-severe));
+            width: 0%;
+            transition: width 0.8s ease-out;
+        }
+         /* Tsunami Warning */
+        .tsunami-alert {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .tsunami-alert.safe {
+            background: rgba(0, 230, 118, 0.06);
+            border: 1px solid rgba(0, 230, 118, 0.12);
+            color: #69f0ae;
+        }
+
+        .tsunami-alert.danger {
+            background: rgba(255, 23, 68, 0.08);
+            border: 1px solid rgba(255, 23, 68, 0.18);
+            color: #ff5252;
+            animation: pulse-bg 2s ease-in-out infinite;
+        }
+
+        .tsunami-icon {
+            font-size: 1.1rem;
+        }
+
+        /* Detail Actions */
+        .detail-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .action-btn.primary {
+            background: var(--text-primary);
+            color: var(--bg);
+            border: none;
+        }
+
+        .action-btn.primary:hover {
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .action-btn.secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .action-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Cursor Tooltip */
+        #tooltip {
+            position: fixed;
+            background: rgba(10, 10, 18, 0.85);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 6px;
+            padding: 0.4rem 0.6rem;
+            pointer-events: none;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.15s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            max-width: 220px;
+        }
+
+        /* Instruction Hint (Bottom Right) */
+        .hint {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: fadeIn 2s ease 1s forwards;
+            opacity: 0;
+        }
+
+        .hl {
+            width: 40px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--text-muted));
+        }
+
+        /* Keyframes */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideRight {
+            from {
+                opacity: 0;
+                transform: translateX(-40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+        }
+
+        @keyframes pulse-bg {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 23, 68, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 12px 2px rgba(255, 23, 68, 0.4);
+            }
+        }
+
+        @media(max-width: 900px) {
+            #sidebar {
+                left: 1rem;
+                width: 280px;
+            }
+            
+            #detail-panel {
+                width: 320px;
+                right: 1rem;
+                padding: 1.25rem;
+            }
+            
+            header {
+                left: 1rem;
+            }
+            
+            .stats-panel {
+                display: none; /* Hide telemetry panel on small screens */
+            }
+        }
+
+        .empty-list-msg {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 2rem;
+        }
+
+        #det-id {
+            font-size: 0.75rem;
+        }
+
+        .tooltip-mag {
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+
+        .tooltip-place {
+            font-size: 0.72rem;
+            color: #fff;
+            margin-top: 2px;
+            font-weight: 600;
+        }
+    </style>
 </head>
+
 <body>
+    <!-- Canvas for WebGL -->
+    <canvas id="c"></canvas>
 
-    <!-- Ambient background pulses -->
-    <div class="ambient-bg">
-        <div class="pulse-ring pulse-ring-1"></div>
-        <div class="pulse-ring pulse-ring-2"></div>
-        <div class="pulse-ring pulse-ring-3"></div>
-    </div>
-
-    <header id="main-header">
-        <div class="header-left">
-            <div class="logo">
-                <span class="logo-icon">◉</span>
-                <h1>Terra</h1>
-            </div>
-            <span class="subtitle">Live Seismic Monitor</span>
-        </div>
-        <div class="header-right">
-            <div class="status-badge" id="status-badge">
-                <span class="status-dot"></span>
-                <span class="status-text">LIVE</span>
-            </div>
-            <div class="refresh-info" id="refresh-info">
-                Refreshing in <span id="countdown">30</span>s
+    <!-- General Overlays -->
+    <header class="overlay">
+        <div class="brand-container">
+            <div class="logo-mark"></div>
+            <div>
+                <h1 class="title">TERRA</h1>
+                <p class="sub">Seismic Activity Monitor</p>
             </div>
         </div>
     </header>
 
-    <main id="dashboard">
-        <!-- Stats row -->
-        <section class="stats-row" id="stats-row">
-            <div class="stat-card" id="stat-total">
-                <div class="stat-icon">📊</div>
-                <div class="stat-content">
-                    <span class="stat-value" id="total-count">—</span>
-                    <span class="stat-label">Total Events</span>
-                </div>
-            </div>
-            <div class="stat-card" id="stat-max-mag">
-                <div class="stat-icon">⚡</div>
-                <div class="stat-content">
-                    <span class="stat-value" id="max-magnitude">—</span>
-                    <span class="stat-label">Max Magnitude</span>
-                </div>
-            </div>
-            <div class="stat-card" id="stat-avg-mag">
-                <div class="stat-icon">📈</div>
-                <div class="stat-content">
-                    <span class="stat-value" id="avg-magnitude">—</span>
-                    <span class="stat-label">Avg Magnitude</span>
-                </div>
-            </div>
-            <div class="stat-card" id="stat-last-update">
-                <div class="stat-icon">🕐</div>
-                <div class="stat-content">
-                    <span class="stat-value" id="last-update">—</span>
-                    <span class="stat-label">Last Updated</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Feed selector -->
-        <section class="controls-bar" id="controls-bar">
-            <div class="feed-selector">
-                <label for="feed-select">Data Feed:</label>
-                <select id="feed-select">
-                    <option value="all_hour">All — Past Hour</option>
-                    <option value="all_day">All — Past Day</option>
-                    <option value="2.5_day">M 2.5+ — Past Day</option>
-                    <option value="4.5_day">M 4.5+ — Past Day</option>
-                    <option value="significant_month">Significant — Past Month</option>
-                </select>
-            </div>
-            <button class="refresh-btn" id="refresh-btn" title="Refresh now">
-                <svg class="refresh-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="23 4 23 10 17 10"></polyline>
-                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                </svg>
-                Refresh Now
-            </button>
-        </section>
-
-        <!-- Earthquake list -->
-        <section class="quake-list-section">
-            <div class="section-header">
-                <h2>Recent Earthquakes</h2>
-                <span class="event-count" id="event-count"></span>
-            </div>
-
-            <!-- Loading state -->
-            <div class="loading-state" id="loading-state">
-                <div class="spinner"></div>
-                <p>Fetching seismic data…</p>
-            </div>
-
-            <!-- Error state -->
-            <div class="error-state hidden" id="error-state">
-                <span class="error-icon">⚠️</span>
-                <p id="error-message">Could not load earthquake data.</p>
-                <button class="retry-btn" id="retry-btn">Retry</button>
-            </div>
-
-            <!-- Empty state -->
-            <div class="empty-state hidden" id="empty-state">
-                <span class="empty-icon">🌍</span>
-                <p>No earthquakes recorded in this time window. That's a good thing!</p>
-            </div>
-
-            <!-- Quake cards container -->
-            <div class="quake-cards hidden" id="quake-cards"></div>
-        </section>
-    </main>
-
-    <!-- Progress bar for auto-refresh -->
-    <div class="refresh-progress" id="refresh-progress">
-        <div class="refresh-progress-bar" id="refresh-progress-bar"></div>
+    <!-- Global Telemetry Stats -->
+    <div class="stats-panel overlay">
+        <div class="stat-row">
+            <span class="stat-label">Feed Status</span>
+            <span class="stat-val pulse" id="feed-status">Live Telemetry</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Earthquakes (24h)</span>
+            <span class="stat-val" id="total-quakes">0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Max Magnitude</span>
+            <span class="stat-val" id="max-mag">N/A</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Camera altitude</span>
+            <span class="stat-val" id="cam-alt">0 km</span>
+        </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- Recent Activity Sidebar (Left) -->
+    <div id="sidebar" class="overlay">
+        <div class="sidebar-toggle" id="sidebar-toggle" title="Toggle Sidebar">
+            <span id="toggle-arrow">◀</span>
+        </div>
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Recent Activity</h2>
+            <span class="quake-count-badge" id="list-count-badge">0</span>
+        </div>
+        
+        <div class="filters">
+            <input type="text" id="search-box" class="search-input" placeholder="Search by location...">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-mag="0">All</button>
+                <button class="filter-btn" data-mag="3">M 3+</button>
+                <button class="filter-btn" data-mag="4.5">M 4.5+</button>
+                <button class="filter-btn" data-mag="6">M 6.0+</button>
+            </div>
+        </div>
+
+        <div class="quake-list" id="quake-list">
+            <!-- Populated dynamically -->
+            <div class="empty-list-msg">
+                Awaiting telemetry stream...
+            </div>
+        </div>
+    </div>
+
+    <!-- Glassmorphic Details Overlay (Right) -->
+    <div id="detail-panel">
+        <div class="detail-header">
+            <span class="detail-meta-label">Epicenter Telemetry</span>
+            <button class="detail-close" id="detail-close">&times;</button>
+        </div>
+
+        <div class="hero-display">
+            <div class="hero-mag-badge" id="det-mag-badge">
+                <span class="hero-mag-label">MAG</span>
+                <span class="hero-mag-val" id="det-mag">0.0</span>
+            </div>
+            <div class="hero-details">
+                <h3 class="hero-place" id="det-place">Unknown Location</h3>
+                <p class="hero-time" id="det-time">Date & Time unknown</p>
+            </div>
+        </div>
+
+        <div class="tsunami-alert safe" id="det-tsunami">
+            <span class="tsunami-icon">🌊</span>
+            <span id="det-tsunami-text">No Tsunami Risk Detected</span>
+        </div>
+
+        <div class="intensity-card">
+            <div class="intensity-header">
+                <span class="intensity-title">Estimated Intensity</span>
+                <span class="intensity-badge" id="det-intensity-badge">Weak</span>
+            </div>
+            <div class="intensity-value" id="det-intensity-val">MMI I - II</div>
+            <p class="intensity-desc" id="det-intensity-desc">No shaking felt or only felt under favorable conditions.</p>
+        </div>
+
+        <div class="telemetry-grid">
+            <div class="tel-item">
+                <span class="tel-label">Latitude</span>
+                <span class="tel-val" id="det-lat">0.000°</span>
+            </div>
+            <div class="tel-item">
+                <span class="tel-label">Longitude</span>
+                <span class="tel-val" id="det-lon">0.000°</span>
+            </div>
+            <div class="tel-item">
+                <span class="tel-label">Focal Depth</span>
+                <span class="tel-val" id="det-depth">0.0 km</span>
+            </div>
+            <div class="tel-item">
+                <span class="tel-label">Event ID</span>
+                <span class="tel-val" id="det-id">N/A</span>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-header">
+                <span>USGS Significance Index</span>
+                <span id="det-sig">0 / 1000</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="det-sig-fill"></div>
+            </div>
+        </div>
+
+        <div class="detail-actions">
+            <button class="action-btn primary" id="btn-focus">Focus Camera</button>
+            <button class="action-btn secondary" id="btn-usgs">More details</button>
+        </div>
+    </div>
+
+    <!-- Mouse hover tooltip -->
+    <div id="tooltip"></div>
+
+    <!-- Control Hints (Bottom Right) -->
+    <div class="hint">
+        <div class="hl"></div>
+        <span>Drag to Orbit · Scroll to Zoom · Click Epicenter</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="refresh.js"></script>
+
+    <script>
+        (function () {
+            // ── State Variables ──────────────────────────────────────────
+            let earthquakes = [];
+            let filteredQuakes = [];
+            let currentFilterMag = 0;
+            let currentSearchQuery = "";
+            let selectedQuakeId = null;
+            
+            // 3D Objects mappings
+            let markersMap = new Map(); // id -> Group
+            let selectionRing = null;
+
+            // ── UI Elements Cache ───────────────────────────────────────
+            const listContainer = document.getElementById('quake-list');
+            const listCountBadge = document.getElementById('list-count-badge');
+            const totalQuakesEl = document.getElementById('total-quakes');
+            const maxMagEl = document.getElementById('max-mag');
+            const feedStatusEl = document.getElementById('feed-status');
+            const camAltEl = document.getElementById('cam-alt');
+            
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const toggleArrow = document.getElementById('toggle-arrow');
+            const searchBox = document.getElementById('search-box');
+            
+            const detailPanel = document.getElementById('detail-panel');
+            const detailCloseBtn = document.getElementById('detail-close');
+            const detMagVal = document.getElementById('det-mag');
+            const detMagBadge = document.getElementById('det-mag-badge');
+            const detPlace = document.getElementById('det-place');
+            const detTime = document.getElementById('det-time');
+            const detTsunami = document.getElementById('det-tsunami');
+            const detTsunamiText = document.getElementById('det-tsunami-text');
+            const detIntensityBadge = document.getElementById('det-intensity-badge');
+            const detIntensityVal = document.getElementById('det-intensity-val');
+            const detIntensityDesc = document.getElementById('det-intensity-desc');
+            const detLat = document.getElementById('det-lat');
+            const detLon = document.getElementById('det-lon');
+            const detDepth = document.getElementById('det-depth');
+            const detId = document.getElementById('det-id');
+            const detSig = document.getElementById('det-sig');
+            const detSigFill = document.getElementById('det-sig-fill');
+            const btnFocus = document.getElementById('btn-focus');
+            const btnUsgs = document.getElementById('btn-usgs');
+            
+            const tooltip = document.getElementById('tooltip');
+
+            // ── Three.js & Globe Setup ──────────────────────────────────
+            const canvas = document.getElementById('c');
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.1;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1500);
+            camera.position.set(0, 8, 28);
+
+            const ctrl = new THREE.OrbitControls(camera, canvas);
+            ctrl.enableDamping = true;
+            ctrl.dampingFactor = 0.04;
+            ctrl.enablePan = false;
+            ctrl.minDistance = 12.5;
+            ctrl.maxDistance = 45;
+            ctrl.rotateSpeed = 0.45;
+            ctrl.zoomSpeed = 0.6;
+            ctrl.autoRotate = true;
+            ctrl.autoRotateSpeed = 0.35;
+
+            // ── Starfield background ──
+            const STAR_COUNT = 3000;
+            const starPositions = new Float32Array(STAR_COUNT * 3);
+            for (let i = 0; i < STAR_COUNT * 3; i += 3) {
+                const r = 250 + Math.random() * 400;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                starPositions[i] = r * Math.sin(phi) * Math.cos(theta);
+                starPositions[i + 1] = r * Math.sin(phi) * Math.sin(theta);
+                starPositions[i + 2] = r * Math.cos(phi);
+            }
+            const starGeometry = new THREE.BufferGeometry();
+            starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            const starMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.7,
+                sizeAttenuation: true,
+                transparent: true,
+                opacity: 0.75
+            });
+            scene.add(new THREE.Points(starGeometry, starMaterial));
+
+            // ── Earth Globe ──
+            const R = 10;
+            const earthGeo = new THREE.SphereGeometry(R, 64, 64);
+            const earthMat = new THREE.MeshPhongMaterial({
+                color: 0x11223e,
+                shininess: 25,
+                specular: new THREE.Color(0x333333),
+            });
+            const earth = new THREE.Mesh(earthGeo, earthMat);
+            earth.rotation.z = 23.5 * Math.PI / 180;
+            scene.add(earth);
+
+            // Progressive texture loaders
+            const textureLoader = new THREE.TextureLoader();
+            
+            // 1. Color texture
+            textureLoader.load('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg', tex => {
+                earthMat.map = tex;
+                earthMat.color.set(0xffffff);
+                earthMat.needsUpdate = true;
+            });
+
+            // 2. Bump topology map
+            textureLoader.load('https://unpkg.com/three-globe/example/img/earth-topology.png', tex => {
+                earthMat.bumpMap = tex;
+                earthMat.bumpScale = 0.08;
+                earthMat.needsUpdate = true;
+            });
+
+            // 3. Specular map
+            textureLoader.load('https://unpkg.com/three-globe/example/img/earth-water.png', tex => {
+                earthMat.specularMap = tex;
+                earthMat.shininess = 40;
+                earthMat.specular.set(0x555555);
+                earthMat.needsUpdate = true;
+            });
+
+            // ── Atmospheric Glow ──
+            const atmosMat = new THREE.ShaderMaterial({
+                vertexShader: `
+                    varying vec3 vNormal;
+                    varying vec3 vWorldPosition;
+                    void main(){
+                        vNormal = normalize(normalMatrix * normal);
+                        vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vNormal;
+                    varying vec3 vWorldPosition;
+                    void main(){
+                        vec3 viewDir = normalize(cameraPosition - vWorldPosition);
+                        float intensity = pow(1.0 - dot(viewDir, vNormal), 2.8);
+                        gl_FragColor = vec4(0.3, 0.6, 1.0, intensity * 0.45);
+                    }
+                `,
+                transparent: true,
+                side: THREE.BackSide,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+            const atmos = new THREE.Mesh(new THREE.SphereGeometry(R + 0.35, 48, 48), atmosMat);
+            scene.add(atmos);
+
+            // ── Clouds Layer ──
+            const cloudMat = new THREE.MeshPhongMaterial({
+                transparent: true,
+                opacity: 0,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                shininess: 0
+            });
+            const clouds = new THREE.Mesh(new THREE.SphereGeometry(R + 0.09, 48, 48), cloudMat);
+            earth.add(clouds);
+
+            textureLoader.load('https://unpkg.com/three-globe/example/img/earth-clouds.png', tex => {
+                cloudMat.map = tex;
+                cloudMat.opacity = 0.28;
+                cloudMat.needsUpdate = true;
+            });
+
+            // ── Earthquakes 3D Layer ──
+            const markersGroup = new THREE.Group();
+            earth.add(markersGroup);
+
+            // ── Lighting ──
+            scene.add(new THREE.AmbientLight(0xffffff, 0.1));
+            
+            const sunLight = new THREE.DirectionalLight(0xfff5e6, 1.5);
+            sunLight.position.set(50, 20, 30);
+            scene.add(sunLight);
+            
+            const fillLight = new THREE.DirectionalLight(0x3366ff, 0.15);
+            fillLight.position.set(-50, -20, -30);
+            scene.add(fillLight);
+
+            // ── Coordinates and Color Helpers ───────────────────────────
+            function latLonToVector3(lat, lon, radius) {
+                const latRad = lat * Math.PI / 180;
+                const lonRad = lon * Math.PI / 180;
+                
+                // standard sphere wrapping
+                const x = radius * Math.cos(latRad) * Math.sin(lonRad);
+                const y = radius * Math.sin(latRad);
+                const z = radius * Math.cos(latRad) * Math.cos(lonRad);
+                
+                return new THREE.Vector3(x, y, z);
+            }
+
+            function getColorForMag(mag) {
+                if (mag < 3.0) return 'var(--color-minor)';
+                if (mag < 4.5) return 'var(--color-light)';
+                if (mag < 6.0) return 'var(--color-moderate)';
+                return 'var(--color-severe)';
+            }
+
+            function getColorHexForMag(mag) {
+                if (mag < 3.0) return 0x00e5ff;
+                if (mag < 4.5) return 0x00e676;
+                if (mag < 6.0) return 0xffb300;
+                return 0xff1744;
+            }
+
+            function getIntensity(mag) {
+                if (mag < 3.0) {
+                    return {
+                        roman: 'MMI I - II',
+                        badge: 'Weak',
+                        desc: 'Felt only by a few people, mostly on upper floors. No structural damage.',
+                        bg: 'rgba(0, 229, 255, 0.1)',
+                        color: 'var(--color-minor)'
+                    };
+                } else if (mag < 4.0) {
+                    return {
+                        roman: 'MMI III',
+                        badge: 'Light',
+                        desc: 'Felt quite noticeably by people indoors. Many do not recognize it as an earthquake. Standing cars may rock slightly.',
+                        bg: 'rgba(0, 230, 118, 0.1)',
+                        color: 'var(--color-light)'
+                    };
+                } else if (mag < 5.0) {
+                    return {
+                        roman: 'MMI IV - V',
+                        badge: 'Moderate',
+                        desc: 'Felt outdoors; sleeping people awakened. Dishes, windows, doors disturbed; walls make cracking sound. Plaster may crack.',
+                        bg: 'rgba(255, 179, 0, 0.1)',
+                        color: 'var(--color-moderate)'
+                    };
+                } else if (mag < 6.0) {
+                    return {
+                        roman: 'MMI VI',
+                        badge: 'Strong',
+                        desc: 'Felt by all, many frightened. Some heavy furniture moved; a few instances of fallen plaster. Damage slight.',
+                        bg: 'rgba(255, 128, 0, 0.15)',
+                        color: '#ff8000'
+                    };
+                } else if (mag < 7.0) {
+                    return {
+                        roman: 'MMI VII - VIII',
+                        badge: 'Severe',
+                        desc: 'Damage negligible in buildings of good design and construction; slight to moderate in well-built ordinary structures; considerable in poorly built structures.',
+                        bg: 'rgba(255, 23, 68, 0.12)',
+                        color: 'var(--color-severe)'
+                    };
+                } else {
+                    return {
+                        roman: 'MMI IX - X+',
+                        badge: 'Extreme',
+                        desc: 'General panic. Major damage to structural foundations. Ground cracks conspicuously. Landslides, liquefaction, masonry collapse.',
+                        bg: 'rgba(255, 23, 68, 0.2)',
+                        color: '#d50000'
+                    };
+                }
+            }
+
+            // ── Camera Focus Animation State ────────────────────────────
+            let isCameraAnimating = false;
+            let cameraAnimProgress = 0;
+            const cameraAnimDuration = 55; // frames (approx 1 sec)
+            const startCameraPos = new THREE.Vector3();
+            const endCameraPos = new THREE.Vector3();
+
+            function startCameraTransition(targetCamPos) {
+                isCameraAnimating = true;
+                cameraAnimProgress = 0;
+                startCameraPos.copy(camera.position);
+                endCameraPos.copy(targetCamPos);
+                ctrl.enabled = false;
+            }
+
+            // ── Render 3D Earthquake Pins ───────────────────────────────
+            function updateGlobeMarkers() {
+                // 1. Clear old markers
+                while (markersGroup.children.length > 0) {
+                    const obj = markersGroup.children[0];
+                    markersGroup.remove(obj);
+                    obj.traverse(child => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) {
+                            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                            else child.material.dispose();
+                        }
+                    });
+                }
+                markersMap.clear();
+
+                // 2. Add current filtered quakes
+                filteredQuakes.forEach(quake => {
+                    const lat = quake.latitude;
+                    const lon = quake.longitude;
+                    const mag = quake.magnitude;
+
+                    // Height of the telemetry spike based on magnitude
+                    const height = Math.max(0.12, (mag - 1.0) * 0.45);
+                    const pos = latLonToVector3(lat, lon, R);
+                    const normal = pos.clone().normalize();
+                    const colorHex = getColorHexForMag(mag);
+
+                    const markerGroup = new THREE.Group();
+                    markerGroup.name = quake.id;
+                    markerGroup.userData = quake;
+
+                    // A: Spike cylinder extending radially
+                    const spikeGeo = new THREE.CylinderGeometry(0.012, 0.045, height, 6);
+                    spikeGeo.translate(0, height / 2, 0); // pivot to base
+                    const spikeMat = new THREE.MeshBasicMaterial({
+                        color: colorHex,
+                        transparent: true,
+                        opacity: 0.72
+                    });
+                    const spike = new THREE.Mesh(spikeGeo, spikeMat);
+                    
+                    // Align Y-axis to radial normal vector
+                    spike.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+                    spike.position.copy(pos);
+                    markerGroup.add(spike);
+
+                    // B: Pulsing glowing sphere at the tip
+                    const tipGeo = new THREE.SphereGeometry(Math.max(0.06, mag * 0.022), 8, 8);
+                    const tipMat = new THREE.MeshBasicMaterial({
+                        color: colorHex
+                    });
+                    const tip = new THREE.Mesh(tipGeo, tipMat);
+                    tip.position.set(0, height, 0); // local offset at tip of spike
+                    spike.add(tip);
+
+                    // C: Ephemeral ground ring (wave radiating outwards)
+                    const ringGeo = new THREE.RingGeometry(0.02, 0.16, 16);
+                    const ringMat = new THREE.MeshBasicMaterial({
+                        color: colorHex,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.65
+                    });
+                    const ring = new THREE.Mesh(ringGeo, ringMat);
+                    ring.position.copy(pos.clone().add(normal.clone().multiplyScalar(0.005))); // slight offset to prevent Z-fight
+                    ring.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+                    markerGroup.add(ring);
+
+                    // Store helper animations properties in userData
+                    markerGroup.userData.ring = ring;
+                    markerGroup.userData.ringScale = 1.0;
+                    markerGroup.userData.maxRingScale = 1.2 + mag * 0.65;
+                    markerGroup.userData.pulsePhase = Math.random() * 100;
+                    markerGroup.userData.tipMesh = tip;
+
+                    markersGroup.add(markerGroup);
+                    markersMap.set(quake.id, markerGroup);
+                });
+            }
+
+            // ── Earthquake Details Logic ────────────────────────────────
+            function displayQuakeDetails(quake) {
+                detMagVal.textContent = quake.magnitude.toFixed(1);
+                detPlace.textContent = quake.place;
+                detTime.textContent = quake.timeHuman;
+                detLat.textContent = quake.latitude.toFixed(3) + '°';
+                detLon.textContent = quake.longitude.toFixed(3) + '°';
+                detDepth.textContent = quake.depth.toFixed(1) + ' km';
+                detId.textContent = quake.id;
+                detSig.textContent = quake.significance + ' / 1000';
+                
+                // Color badges based on severity
+                const colorCode = getColorForMag(quake.magnitude);
+                detMagBadge.style.backgroundColor = colorCode;
+                detMagBadge.style.color = '#000';
+
+                // Significance progress bar
+                detSigFill.style.width = (quake.significance / 10) + '%';
+                
+                // Tsunami alert indicator
+                if (quake.tsunami) {
+                    detTsunami.className = 'tsunami-alert danger';
+                    detTsunamiText.textContent = 'TSUNAMI WARNING ISSUED';
+                } else {
+                    detTsunami.className = 'tsunami-alert safe';
+                    detTsunamiText.textContent = 'No Tsunami Risk Detected';
+                }
+
+                // Estimated intensity details
+                const intensity = getIntensity(quake.magnitude);
+                detIntensityBadge.style.backgroundColor = intensity.color;
+                detIntensityBadge.style.color = '#000';
+                detIntensityBadge.textContent = intensity.badge;
+                detIntensityVal.textContent = intensity.roman;
+                detIntensityVal.style.color = intensity.color;
+                detIntensityDesc.textContent = intensity.desc;
+
+                // Slide open detail panel
+                detailPanel.classList.add('open');
+            }
+
+            function selectEarthquake(quakeId) {
+                selectedQuakeId = quakeId;
+                const quake = earthquakes.find(q => q.id === quakeId);
+                if (!quake) return;
+
+                // Highlight card in sidebar list
+                document.querySelectorAll('.quake-card').forEach(card => {
+                    if (card.dataset.id === quakeId) {
+                        card.classList.add('selected');
+                        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                });
+
+                // Display numerical panel details
+                displayQuakeDetails(quake);
+
+                // Stop auto-rotation while inspecting
+                ctrl.autoRotate = false;
+
+                // Position telemetry focus ring
+                const pos = latLonToVector3(quake.latitude, quake.longitude, R);
+                const normal = pos.clone().normalize();
+                
+                if (selectionRing) {
+                    earth.remove(selectionRing);
+                    selectionRing.geometry.dispose();
+                    selectionRing.material.dispose();
+                }
+
+                const ringGeo = new THREE.RingGeometry(0.25, 0.45, 32);
+                const ringMat = new THREE.MeshBasicMaterial({
+                    color: 0xffea00,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.95
+                });
+                selectionRing = new THREE.Mesh(ringGeo, ringMat);
+                selectionRing.position.copy(pos.clone().add(normal.clone().multiplyScalar(0.01)));
+                selectionRing.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+                earth.add(selectionRing);
+
+                // Smoothly focus camera coordinates
+                const marker = markersMap.get(quakeId);
+                if (marker) {
+                    const targetWorldPos = new THREE.Vector3();
+                    marker.getWorldPosition(targetWorldPos);
+                    
+                    // Direct line of sight from camera to centered epicenter on globe
+                    const cameraDistance = 21.0;
+                    const cameraTargetPos = targetWorldPos.clone().normalize().multiplyScalar(cameraDistance);
+                    startCameraTransition(cameraTargetPos);
+                }
+            }
+
+            function deselectEarthquake() {
+                selectedQuakeId = null;
+                
+                // Clear selection highlight card
+                document.querySelectorAll('.quake-card').forEach(card => card.classList.remove('selected'));
+
+                // Hide detail panel
+                detailPanel.classList.remove('open');
+
+                // Clear yellow selection ring
+                if (selectionRing) {
+                    earth.remove(selectionRing);
+                    selectionRing = null;
+                }
+
+                // Resume auto-rotation
+                ctrl.autoRotate = true;
+            }
+
+            // ── Sidebar List Rendering ──────────────────────────────────
+            function renderSidebarList() {
+                listContainer.innerHTML = '';
+                
+                if (filteredQuakes.length === 0) {
+                    listContainer.innerHTML = `
+                        <div class="empty-list-msg">
+                            No earthquakes match the current filters.
+                        </div>
+                    `;
+                    listCountBadge.textContent = '0';
+                    return;
+                }
+
+                listCountBadge.textContent = filteredQuakes.length;
+
+                filteredQuakes.forEach(quake => {
+                    const colorCode = getColorForMag(quake.magnitude);
+                    
+                    const card = document.createElement('div');
+                    card.className = `quake-card ${quake.id === selectedQuakeId ? 'selected' : ''}`;
+                    card.dataset.id = quake.id;
+
+                    const dateStr = new Date(quake.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    card.innerHTML = `
+                        <div class="quake-mag-badge" style="background-color: ${colorCode}; color: #000;">
+                            ${quake.magnitude.toFixed(1)}
+                        </div>
+                        <div class="quake-card-info">
+                            <div class="quake-card-place">${quake.place}</div>
+                            <div class="quake-card-meta">
+                                <span>Depth: ${quake.depth.toFixed(1)} km</span>
+                                <span>${dateStr}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    card.addEventListener('click', () => {
+                        selectEarthquake(quake.id);
+                    });
+
+                    listContainer.appendChild(card);
+                });
+            }
+
+            function filterQuakes() {
+                filteredQuakes = earthquakes.filter(quake => {
+                    const matchMag = quake.magnitude >= currentFilterMag;
+                    const matchSearch = quake.place.toLowerCase().includes(currentSearchQuery.toLowerCase());
+                    return matchMag && matchSearch;
+                });
+
+                // Update 3D elements and sidebar list
+                updateGlobeMarkers();
+                renderSidebarList();
+
+                // If currently selected quake was filtered out, deselect it
+                if (selectedQuakeId && !filteredQuakes.some(q => q.id === selectedQuakeId)) {
+                    deselectEarthquake();
+                }
+            }
+
+            // ── Event Listeners Setup ───────────────────────────────────
+            
+            // Search field input
+            searchBox.addEventListener('input', (e) => {
+                currentSearchQuery = e.target.value;
+                filterQuakes();
+            });
+
+            // Filter button click handler
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilterMag = parseFloat(btn.dataset.mag);
+                    filterQuakes();
+                });
+            });
+
+            // Sidebar Toggle slide panel
+            let sidebarCollapsed = false;
+            sidebarToggle.addEventListener('click', () => {
+                sidebarCollapsed = !sidebarCollapsed;
+                if (sidebarCollapsed) {
+                    sidebar.classList.add('collapsed');
+                    toggleArrow.textContent = '▶';
+                } else {
+                    sidebar.classList.remove('collapsed');
+                    toggleArrow.textContent = '◀';
+                }
+            });
+
+            // Close button on right side details panel
+            detailCloseBtn.addEventListener('click', deselectEarthquake);
+
+            // "Focus Camera" action buttons
+            btnFocus.addEventListener('click', () => {
+                if (selectedQuakeId) {
+                    selectEarthquake(selectedQuakeId);
+                }
+            });
+
+            // "More details" link to USGS
+            btnUsgs.addEventListener('click', () => {
+                if (selectedQuakeId) {
+                    const quake = earthquakes.find(q => q.id === selectedQuakeId);
+                    if (quake && quake.url) {
+                        window.open(quake.url, '_blank');
+                    }
+                }
+            });
+
+            // ── Raycasting Interactions ──────────────────────────────────
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            let hoveredMarker = null;
+
+            // Differentiate click from drag mouse movement
+            const mDownPos = { x: 0, y: 0 };
+            
+            window.addEventListener('mousedown', (e) => {
+                mDownPos.x = e.clientX;
+                mDownPos.y = e.clientY;
+            });
+
+            window.addEventListener('mouseup', (e) => {
+                const diffX = Math.abs(e.clientX - mDownPos.x);
+                const diffY = Math.abs(e.clientY - mDownPos.y);
+                
+                if (diffX < 4 && diffY < 4) {
+                    // Click did not include scrolling/dragging
+                    // Skip if clicked on absolute HTML panels
+                    if (
+                        e.target.closest('#sidebar') || 
+                        e.target.closest('#detail-panel') || 
+                        e.target.closest('.stats-panel') || 
+                        e.target.closest('header')
+                    ) {
+                        return;
+                    }
+
+                    raycaster.setFromCamera(mouse, camera);
+                    const intersects = raycaster.intersectObjects(markersGroup.children, true);
+
+                    let hitMarker = null;
+                    if (intersects.length > 0) {
+                        let obj = intersects[0].object;
+                        while (obj && obj.parent !== markersGroup) {
+                            obj = obj.parent;
+                        }
+                        hitMarker = obj;
+                    }
+
+                    if (hitMarker) {
+                        selectEarthquake(hitMarker.userData.id);
+                    } else {
+                        // Clicked empty space: check if clicked earth sphere directly
+                        const sphereIntersects = raycaster.intersectObject(earth);
+                        if (sphereIntersects.length > 0) {
+                            deselectEarthquake();
+                        }
+                    }
+                }
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(markersGroup.children, true);
+
+                let foundMarker = null;
+                if (intersects.length > 0) {
+                    let obj = intersects[0].object;
+                    while (obj && obj.parent !== markersGroup) {
+                        obj = obj.parent;
+                    }
+                    foundMarker = obj;
+                }
+
+                if (foundMarker) {
+                    document.body.style.cursor = 'pointer';
+                    
+                    if (hoveredMarker !== foundMarker) {
+                        if (hoveredMarker) hoveredMarker.scale.set(1, 1, 1);
+                        hoveredMarker = foundMarker;
+                        hoveredMarker.scale.setScalar(1.22); // Highlight scale factor
+                    }
+
+                    const quake = hoveredMarker.userData;
+                    tooltip.innerHTML = `
+                        <div class="tooltip-mag" style="color: ${getColorForMag(quake.magnitude)}">
+                            M ${quake.magnitude.toFixed(1)}
+                        </div>
+                        <div class="tooltip-place">
+                            ${quake.place}
+                        </div>
+                    `;
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY + 15) + 'px';
+                    tooltip.style.opacity = 1;
+                } else {
+                    document.body.style.cursor = 'default';
+                    if (hoveredMarker) {
+                        hoveredMarker.scale.set(1, 1, 1);
+                        hoveredMarker = null;
+                    }
+                    tooltip.style.opacity = 0;
+                }
+            });
+
+            // ── Auto-rotate pause on manual interaction ────────────────
+            let rotationResetTimeout;
+            ctrl.addEventListener('start', () => {
+                ctrl.autoRotate = false;
+            });
+            ctrl.addEventListener('end', () => {
+                clearTimeout(rotationResetTimeout);
+                // Resume auto-rotation after 6 seconds of inactivity if no selection is open
+                if (!selectedQuakeId) {
+                    rotationResetTimeout = setTimeout(() => {
+                        ctrl.autoRotate = true;
+                    }, 6000);
+                }
+            });
+
+            // ── Animation Loop ──────────────────────────────────────────
+            let lastY = 0;
+            let frameCount = 0;
+            
+            function animate() {
+                requestAnimationFrame(animate);
+
+                // Auto-rotate globe and atmospheric rotation
+                if (ctrl.autoRotate) {
+                    earth.rotation.y += 0.0008;
+                    clouds.rotation.y += 0.00045;
+                }
+                atmos.rotation.copy(earth.rotation);
+
+                // Periodically shift the sun coordinate vector direction (orbits once every few hours)
+                const sunTime = performance.now() * 0.00008;
+                sunLight.position.set(Math.cos(sunTime) * 50, 20, Math.sin(sunTime) * 50);
+
+                // Animate custom 3D markers (waves/tips)
+                markersGroup.children.forEach(marker => {
+                    // A: Expanding epicentral wave rings
+                    const ring = marker.userData.ring;
+                    if (ring) {
+                        marker.userData.ringScale += 0.015;
+                        if (marker.userData.ringScale > marker.userData.maxRingScale) {
+                            marker.userData.ringScale = 1.0;
+                        }
+                        ring.scale.setScalar(marker.userData.ringScale);
+
+                        // Calculate fade relative to expansion progress
+                        const fadeProgress = (marker.userData.ringScale - 1.0) / (marker.userData.maxRingScale - 1.0);
+                        ring.material.opacity = 0.65 * (1.0 - fadeProgress);
+                    }
+
+                    // B: Pulsing tip sphere animations
+                    const tip = marker.userData.tipMesh;
+                    if (tip) {
+                        const pulsePhase = performance.now() * 0.004 + marker.userData.pulsePhase;
+                        const pulseScale = 1.0 + Math.sin(pulsePhase) * 0.15;
+                        tip.scale.setScalar(pulseScale);
+                    }
+                });
+
+                // Selection ring rotation effect
+                if (selectionRing) {
+                    selectionRing.rotation.z += 0.015;
+                }
+
+                // Camera pan interpolation
+                if (isCameraAnimating) {
+                    cameraAnimProgress += 1 / cameraAnimDuration;
+                    if (cameraAnimProgress >= 1.0) {
+                        cameraAnimProgress = 1.0;
+                        isCameraAnimating = false;
+                        ctrl.enabled = true;
+                    }
+                    
+                    // Cubic ease-out
+                    const t = 1.0 - Math.pow(1.0 - cameraAnimProgress, 3);
+                    camera.position.lerpVectors(startCameraPos, endCameraPos, t);
+                    camera.lookAt(0, 0, 0);
+                }
+
+                ctrl.update();
+
+                // Periodic telemetry statistics refresh (every 6 frames to save CPU cycles)
+                if (++frameCount % 6 === 0) {
+                    const cameraDistance = camera.position.length();
+                    camAltEl.textContent = ((cameraDistance - R) * 637 | 0).toLocaleString() + ' km';
+                }
+
+                renderer.render(scene, camera);
+            }
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // ── Live Backend Feed Subscription ──────────────────────────
+            EarthquakeBackend.onUpdate(data => {
+                earthquakes = data;
+                
+                // Sort by magnitude descending
+                earthquakes.sort((a, b) => b.magnitude - a.magnitude);
+                
+                // Calculate high-level stats
+                totalQuakesEl.textContent = earthquakes.length;
+                if (earthquakes.length > 0) {
+                    const topQuake = earthquakes[0]; // first item is highest magnitude
+                    maxMagEl.textContent = `M ${topQuake.magnitude.toFixed(1)} (${topQuake.place.split('of ').pop()})`;
+                } else {
+                    maxMagEl.textContent = 'N/A';
+                }
+
+                feedStatusEl.className = 'stat-val pulse';
+                feedStatusEl.textContent = 'Live Telemetry';
+
+                filterQuakes();
+            });
+
+            EarthquakeBackend.onError(info => {
+                feedStatusEl.className = 'stat-val';
+                feedStatusEl.style.color = 'var(--color-severe)';
+                feedStatusEl.textContent = 'Connection Error';
+                console.error('[Telemetry] Fetch error:', info);
+            });
+
+            EarthquakeBackend.onStatus(status => {
+                if (status.status === 'fetching') {
+                    feedStatusEl.textContent = 'Updating...';
+                }
+            });
+
+            // Initialize loop and start backend refresh
+            animate();
+            EarthquakeBackend.start();
+
+        })();
+    </script>
 </body>
+
 </html>
