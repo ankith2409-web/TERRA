@@ -15,7 +15,8 @@
  */
 
 const EarthquakeBackend = (function () {
-    // ── Configuration ──────────────────────────────────────────
+    
+// ── Configuration ──────────────────────────────────────────
     const CONFIG = {
         // USGS GeoJSON feed — all earthquakes in the past day
         url: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson',
@@ -268,3 +269,6 @@ const EarthquakeBackend = (function () {
         },
     };
 })();
+
+
+this code is perfect
