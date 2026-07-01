@@ -2,3 +2,5 @@ This branch sets up the rotating Earth globe.
 It uses react-globe.gl with a dark Earth texture.
 The globe auto-rotates and displays earthquake points.
 
+Auto rotation enabled for globe.
+everything added to earth.html
