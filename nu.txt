@@ -1,0 +1,13 @@
+This branch adds user controls to the globe.
+Features include:
+- Zoom in/out
+- Drag to rotate
+- Reset view
+Controls improve interactivity and usability.
+
+Zoom in/out control added.
+Drag rotation control added.
+Reset view option added.
+Controls improve usability and interactivity.
+NU branch complete with controls.
+ everything added to earth.html
