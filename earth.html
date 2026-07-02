@@ -5,37 +5,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TERRA // Interactive Globe</title>
+    <meta name="description" content="Interactive 3D Earth visualization with real-time seismic activity data.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&family=Playfair+Display:wght@400;800&display=swap"
         rel="stylesheet">
     <!-- Preload the main texture so browser fetches it ASAP -->
-    <link rel="preload" href="https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg" as="image"><style>
+    <link rel="preload" href="https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg" as="image">
+    <style>
         :root {
             --bg: #000;
             --text: #f0f0f0;
             --muted: rgba(240, 240, 240, 0.4);
             --accent: #4fc3f7;
             --warm: #ffb74d;
+            --danger: #ff3b30;
+            --panel-bg: rgba(10, 10, 20, 0.65);
+            --panel-border: rgba(79, 195, 247, 0.08);
         }
-* {
+
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }body {
+        }
+
+        body {
             background: var(--bg);
             color: var(--text);
             overflow: hidden;
             font-family: 'JetBrains Mono', monospace;
             -webkit-font-smoothing: antialiased;
-        } #c {
+        }
+
+        #c {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-        }#ui {
+            cursor: grab;
+        }
+
+        #c:active {
+            cursor: grabbing;
+        }
+
+        /* ── UI Overlay ── */
+        #ui {
             position: fixed;
             top: 0;
             left: 0;
@@ -46,75 +64,92 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 3rem 4rem;
-        }header {
+            padding: 2rem 2.5rem;
+        }
+
+        /* ── Header ── */
+        header {
             animation: fadeD 1.2s cubic-bezier(.16, 1, .3, 1) forwards;
             opacity: 0;
             transform: translateY(-20px);
-        }.title {
+        }
+
+        .title {
             font-family: 'Playfair Display', serif;
-            font-size: clamp(4rem, 10vw, 8rem);
+            font-size: clamp(2rem, 5vw, 3.5rem);
             font-weight: 800;
-            letter-spacing: -.05em;
-            line-height: .85;
-            margin-bottom: .75rem;
-            text-shadow: 0 0 60px rgba(79, 195, 247, .12);
-        }.sub {
-            font-size: .75rem;
+            letter-spacing: -.04em;
+            line-height: .9;
+            margin-bottom: .4rem;
+            text-shadow: 0 0 40px rgba(79, 195, 247, .1);
+        }
+
+        .sub {
+            font-size: .65rem;
             text-transform: uppercase;
-            letter-spacing: .25em;
+            letter-spacing: .2em;
             color: var(--muted);
-            max-width: 320px;
-            line-height: 1.8;
-        }.panel {
+            max-width: 280px;
+            line-height: 1.7;
+        }
+
+        /* ── Telemetry Panel (bottom-left) ── */
+        .panel {
             align-self: flex-start;
-            background: rgba(10, 10, 20, .6);
+            background: var(--panel-bg);
             -webkit-backdrop-filter: blur(16px);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(79, 195, 247, .08);
-            border-radius: 12px;
-            padding: 1.25rem 1.75rem;
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
             animation: fadeU 1.2s cubic-bezier(.16, 1, .3, 1) .4s forwards;
             opacity: 0;
             transform: translateY(20px);
             pointer-events: auto;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
-        }.ph {
-            font-size: .6rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .35);
+        }
+
+        .ph {
+            font-size: .7rem;
             text-transform: uppercase;
-            letter-spacing: .3em;
+            letter-spacing: .25em;
             color: var(--accent);
-            margin-bottom: 1rem;
+            margin-bottom: .9rem;
             padding-bottom: .6rem;
             border-bottom: 1px solid rgba(79, 195, 247, .1);
             display: flex;
             align-items: center;
             gap: .5rem;
-        }.dot {
-            width: 6px;
-            height: 6px;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             background: #4caf50;
-            box-shadow: 0 0 8px rgba(76, 175, 80, .6);
+            box-shadow: 0 0 6px rgba(76, 175, 80, .6);
             animation: pulse 2s ease-in-out infinite;
         }
 
         .dr {
             display: flex;
             justify-content: space-between;
-            margin-bottom: .6rem;
-            font-size: .7rem;
-            min-width: 260px;
-        }.dr:last-child {
+            margin-bottom: .5rem;
+            font-size: 0.8rem;
+            min-width: 280px;
+        }
+
+        .dr:last-child {
             margin-bottom: 0;
         }
 
         .dl {
             color: var(--muted);
             text-transform: uppercase;
-            letter-spacing: .1em;
+            letter-spacing: .08em;
         }
-.dv {
+
+        .dv {
             color: var(--accent);
             font-weight: 700;
             font-variant-numeric: tabular-nums;
@@ -123,122 +158,178 @@
         .dv.w {
             color: var(--warm);
         }
- .hint {
+
+        /* ── Hint ── */
+        .hint {
             position: absolute;
-            bottom: 3rem;
-            right: 4rem;
-            font-size: .65rem;
+            bottom: 2rem;
+            right: 2.5rem;
+            font-size: .6rem;
             text-transform: uppercase;
-            letter-spacing: .25em;
+            letter-spacing: .2em;
             color: var(--muted);
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: .75rem;
             animation: fadeI 2s ease 1.2s forwards;
             opacity: 0;
         }
- .hl {
-            width: 40px;
+
+        .hl {
+            width: 30px;
             height: 1px;
             background: linear-gradient(90deg, transparent, var(--muted));
-        }@keyframes fadeD {
-            to {
-                opacity: 1;
-                transform: translateY(0)
-            } @keyframes fadeU {
-            to {
-                opacity: 1;
-                transform: translateY(0)
-            }
-        }     @keyframes fadeI {
-            to {
-                opacity: 1
-            }
-        } @keyframes pulse {
+        }
 
-            0%,
-            100% {
-                opacity: 1
-            }50% {
-                opacity: .4
+        /* ── Keyframes (FIXED — each properly closed) ── */
+        @keyframes fadeD {
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
+
+        @keyframes fadeU {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeI {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .4;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Earthquake Sidebar Panel ── */
         #eq-panel {
             position: fixed;
-            top: 3rem;
-            right: 4rem;
-            width: 320px;
-            max-height: calc(100vh - 12rem);
-            background: rgba(10, 10, 20, .6);
+            top: 2rem;
+            right: 2.5rem;
+            width: 350px;
+            max-height: calc(100vh - 6rem);
+            background: var(--panel-bg);
             -webkit-backdrop-filter: blur(16px);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(79, 195, 247, .08);
-            border-radius: 12px;
-            padding: 1.25rem 1.75rem;
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
             animation: fadeU 1.2s cubic-bezier(.16, 1, .3, 1) .5s forwards;
             opacity: 0;
             transform: translateY(20px);
             pointer-events: auto;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .35);
             display: flex;
             flex-direction: column;
             z-index: 15;
         }
+
         .eq-list {
             overflow-y: auto;
             margin-top: 0.5rem;
-            padding-right: 0.5rem;
-            max-height: calc(100vh - 16rem);
+            padding-right: 0.4rem;
+            flex: 1;
         }
+
         /* Custom scrollbar */
         .eq-list::-webkit-scrollbar {
-            width: 4px;
+            width: 3px;
         }
+
         .eq-list::-webkit-scrollbar-track {
-            background: rgba(240, 240, 240, 0.05);
+            background: rgba(240, 240, 240, 0.03);
         }
+
         .eq-list::-webkit-scrollbar-thumb {
-            background: rgba(79, 195, 247, 0.3);
+            background: rgba(79, 195, 247, 0.25);
             border-radius: 2px;
         }
+
         .eq-item {
-            padding: 0.75rem;
-            border-radius: 8px;
-            border: 1px solid rgba(240, 240, 240, 0.03);
-            background: rgba(240, 240, 240, 0.02);
-            margin-bottom: 0.6rem;
+            padding: 0.75rem 0.9rem;
+            border-radius: 6px;
+            border: 1px solid rgba(240, 240, 240, 0.06);
+            background: rgba(240, 240, 240, 0.03);
+            margin-bottom: 0.5rem;
             cursor: pointer;
-            transition: all 0.25s cubic-bezier(.16, 1, .3, 1);
+            transition: all 0.2s cubic-bezier(.16, 1, .3, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
+
         .eq-item:hover {
-            background: rgba(79, 195, 247, 0.08);
-            border-color: rgba(79, 195, 247, 0.2);
-            transform: translateX(-4px);
+            background: rgba(79, 195, 247, 0.06);
+            border-color: rgba(79, 195, 247, 0.15);
+            transform: translateX(-3px);
         }
+
         .eq-item.active {
-            background: rgba(79, 195, 247, 0.15);
-            border-color: rgba(79, 195, 247, 0.4);
-            box-shadow: 0 0 12px rgba(79, 195, 247, 0.15);
+            background: rgba(79, 195, 247, 0.12);
+            border-color: rgba(79, 195, 247, 0.35);
+            box-shadow: 0 0 10px rgba(79, 195, 247, 0.1);
         }
+
+        .eq-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 6px currentColor;
+        }
+
+        .eq-info {
+            flex: 1;
+            min-width: 0;
+        }
+
         .eq-loc {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             font-weight: 700;
             color: #fff;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
         .eq-meta {
             display: flex;
             justify-content: space-between;
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             color: var(--muted);
         }
+
         .eq-mag {
-            color: var(--warm);
             font-weight: 700;
         }
+
         .eq-depth {
-            color: #ccc;
+            color: #aaa;
         }
+
+        /* ── Tooltip ── */
         #tooltip {
             position: fixed;
             top: 0;
@@ -246,67 +337,231 @@
             pointer-events: none;
             z-index: 100;
             opacity: 0;
-            transform: translate(-50%, -120%) scale(0.95);
+            transform: translate(-50%, -120%) scale(0.92);
             transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background: rgba(10, 10, 20, 0.85);
+            background: rgba(10, 10, 20, 0.88);
             -webkit-backdrop-filter: blur(12px);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(79, 195, 247, 0.2);
             border-radius: 8px;
-            padding: 0.75rem 1rem;
+            padding: 0.6rem 0.85rem;
             color: #fff;
-            font-size: 0.7rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            min-width: 180px;
+            font-size: 0.65rem;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+            min-width: 160px;
         }
+
         #tooltip.visible {
             opacity: 1;
             transform: translate(-50%, -120%) scale(1);
         }
+
         .tt-title {
             font-weight: 700;
-            margin-bottom: 0.35rem;
-            border-bottom: 1px solid rgba(79, 195, 247, 0.15);
-            padding-bottom: 0.25rem;
+            margin-bottom: 0.25rem;
+            border-bottom: 1px solid rgba(79, 195, 247, 0.12);
+            padding-bottom: 0.2rem;
             color: var(--accent);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.04em;
+            font-size: 0.6rem;
         }
+
         .tt-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.15rem;
         }
+
         .tt-label {
             color: var(--muted);
-            margin-right: 1rem;
+            margin-right: 0.75rem;
         }
+
         .tt-value {
             font-variant-numeric: tabular-nums;
             font-weight: 700;
         }
 
-        @media(max-width:1024px) {
+        /* ── Detail Panel (shown on click) ── */
+        #detail-panel {
+            position: fixed;
+            bottom: 2rem;
+            right: 2.5rem;
+            width: 380px;
+            background: var(--panel-bg);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(79, 195, 247, 0.12);
+            border-radius: 10px;
+            padding: 1.5rem 1.75rem;
+            pointer-events: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+            z-index: 20;
+            animation: slideIn 0.35s cubic-bezier(.16, 1, .3, 1) forwards;
+        }
+
+        #detail-panel.hidden {
+            display: none;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.2rem;
+        }
+
+        .detail-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            line-height: 1.2;
+            flex: 1;
+            padding-right: 0.5rem;
+        }
+
+        #detail-close {
+            background: none;
+            border: 1px solid rgba(240, 240, 240, 0.1);
+            color: var(--muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        #detail-close:hover {
+            color: #fff;
+            border-color: rgba(240, 240, 240, 0.3);
+            background: rgba(240, 240, 240, 0.05);
+        }
+
+        .detail-mag-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.9rem;
+            border-bottom: 1px solid rgba(79, 195, 247, 0.08);
+        }
+
+        .detail-mag-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: #fff;
+        }
+
+        .detail-mag-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--muted);
+        }
+
+        .detail-mag-severity {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-top: 0.2rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .detail-row-label {
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .detail-row-value {
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: var(--accent);
+        }
+
+        .detail-bar-container {
+            margin-top: 1rem;
+            height: 4px;
+            background: rgba(240, 240, 240, 0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .detail-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s cubic-bezier(.16, 1, .3, 1);
+        }
+
+        .detail-link-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            margin-top: 1.2rem;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--accent);
+            background: rgba(79, 195, 247, 0.08);
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .detail-link-btn:hover {
+            background: rgba(79, 195, 247, 0.2);
+            color: #fff;
+            box-shadow: 0 0 12px rgba(79, 195, 247, 0.25);
+            border-color: #fff;
+        }
+
+        /* ── Responsive ── */
+        @media(max-width: 1024px) {
             #eq-panel {
-                display: none; /* Hide sidebar list on smaller screens to prevent overlap, but keep interaction */
+                display: none;
             }
         }
 
-        @media(max-width:768px) {
+        @media(max-width: 768px) {
             #ui {
-                padding: 2rem;
+                padding: 1.5rem;
                 flex-direction: column;
                 justify-content: flex-start;
-                gap: 1.5rem;
+                gap: 1rem;
                 overflow-y: auto;
                 pointer-events: auto;
             }
+
             .panel {
                 min-width: 100%;
                 transform: none !important;
                 animation: none !important;
                 opacity: 1 !important;
             }
+
             .hint {
                 position: static;
                 margin-top: 1rem;
@@ -314,24 +569,61 @@
                 animation: none !important;
                 opacity: 1 !important;
             }
+
+            #detail-panel {
+                left: 1.5rem;
+                right: 1.5rem;
+                bottom: 1.5rem;
+                width: auto;
+            }
         }
     </style>
 </head>
 
 <body>
     <canvas id="c"></canvas>
-    
+
+    <!-- Tooltip (starts hidden & empty — populated dynamically) -->
     <div id="tooltip">
-        <div class="tt-title" id="tt-loc">Tokyo, Japan</div>
-        <div class="tt-row"><span class="tt-label">Magnitude</span><span class="tt-value" id="tt-mag" style="color:var(--warm);">6.2</span></div>
-        <div class="tt-row"><span class="tt-label">Depth</span><span class="tt-value" id="tt-depth">30 km</span></div>
-        <div class="tt-row"><span class="tt-label">Coordinates</span><span class="tt-value" id="tt-coords">35.6°N, 139.7°E</span></div>
+        <div class="tt-title" id="tt-loc"></div>
+        <div class="tt-row"><span class="tt-label">Magnitude</span><span class="tt-value" id="tt-mag"
+                style="color:var(--warm);"></span></div>
+        <div class="tt-row"><span class="tt-label">Depth</span><span class="tt-value" id="tt-depth"></span></div>
+        <div class="tt-row"><span class="tt-label">Coordinates</span><span class="tt-value" id="tt-coords"></span>
+        </div>
+    </div>
+
+    <!-- Detail Panel (shown on spike/sidebar click) -->
+    <div id="detail-panel" class="hidden">
+        <div class="detail-header">
+            <div class="detail-name" id="detail-name"></div>
+            <button id="detail-close">✕</button>
+        </div>
+        <div class="detail-mag-row">
+            <div class="detail-mag-badge" id="detail-badge"></div>
+            <div>
+                <div class="detail-mag-label">Magnitude</div>
+                <div class="detail-mag-severity" id="detail-severity"></div>
+            </div>
+        </div>
+        <div class="detail-row"><span class="detail-row-label">Depth</span><span class="detail-row-value"
+                id="detail-depth"></span></div>
+        <div class="detail-row"><span class="detail-row-label">Latitude</span><span class="detail-row-value"
+                id="detail-lat"></span></div>
+        <div class="detail-row"><span class="detail-row-label">Longitude</span><span class="detail-row-value"
+                id="detail-lng"></span></div>
+        <div class="detail-row"><span class="detail-row-label">Classification</span><span class="detail-row-value"
+                id="detail-class"></span></div>
+        <div class="detail-bar-container">
+            <div class="detail-bar" id="detail-bar"></div>
+        </div>
+        <a id="detail-link" href="#" target="_blank" class="detail-link-btn">More Details on USGS ↗</a>
     </div>
 
     <div id="ui">
         <header>
             <h1 class="title">TERRA</h1>
-            <p class="sub">Photorealistic Earth Visualization<br>Interactive Orbital View</p>
+            <p class="sub">Interactive Earth Visualization<br>Orbital Seismic View</p>
         </header>
 
         <div class="panel">
@@ -347,7 +639,8 @@
 
         <div id="eq-panel">
             <div class="ph">
-                <div class="dot" style="background:#ffb74d; box-shadow: 0 0 8px rgba(255, 183, 77, .6);"></div><span>Seismic Activity</span>
+                <div class="dot" style="background:#ffb74d; box-shadow: 0 0 6px rgba(255, 183, 77, .6);"></div>
+                <span>Seismic Activity</span>
             </div>
             <div class="eq-list" id="eq-list-container">
                 <!-- Populated dynamically -->
@@ -355,7 +648,7 @@
         </div>
 
         <div class="hint">
-            <div class="hl"></div><span>Drag to Orbit · Scroll to Zoom</span>
+            <div class="hl"></div><span>Drag to Orbit · Scroll to Zoom · Click Spike for Details</span>
         </div>
     </div>
 
@@ -363,7 +656,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script>
         (function () {
-            // ── Renderer (use the existing canvas) ──
+            // ── Renderer ──
             const canvas = document.getElementById('c');
             const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -371,10 +664,12 @@
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.toneMappingExposure = 1.1;
             renderer.outputEncoding = THREE.sRGBEncoding;
- const scene = new THREE.Scene();
+
+            const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1500);
             camera.position.set(0, 4, 26);
- const ctrl = new THREE.OrbitControls(camera, canvas);
+
+            const ctrl = new THREE.OrbitControls(camera, canvas);
             ctrl.enableDamping = true;
             ctrl.dampingFactor = 0.04;
             ctrl.enablePan = false;
@@ -384,7 +679,8 @@
             ctrl.zoomSpeed = 0.6;
             ctrl.autoRotate = true;
             ctrl.autoRotateSpeed = 0.35;
-// ── Stars (lightweight) ──
+
+            // ── Stars ──
             const STAR_COUNT = 4000;
             const sp = new Float32Array(STAR_COUNT * 3);
             for (let i = 0; i < STAR_COUNT * 3; i += 3) {
@@ -394,7 +690,8 @@
                 sp[i] = r * Math.sin(ph) * Math.cos(th);
                 sp[i + 1] = r * Math.sin(ph) * Math.sin(th);
                 sp[i + 2] = r * Math.cos(ph);
-            }const sg = new THREE.BufferGeometry();
+            }
+            const sg = new THREE.BufferGeometry();
             sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
             scene.add(new THREE.Points(sg, new THREE.PointsMaterial({
                 color: 0xffffff, size: 0.8, sizeAttenuation: true, transparent: true, opacity: 0.85
@@ -403,25 +700,27 @@
             // ── Earth ──
             const R = 10;
             const earthGeo = new THREE.SphereGeometry(R, 64, 64);
-// Start with a dark blue placeholder so the globe is visible instantly
+            // Start with a dark blue placeholder so the globe is visible instantly
             const earthMat = new THREE.MeshPhongMaterial({
                 color: 0x1a3a5c,
                 shininess: 25,
                 specular: new THREE.Color(0x333333),
-            });            const earth = new THREE.Mesh(earthGeo, earthMat);
+            });
+            const earth = new THREE.Mesh(earthGeo, earthMat);
             earth.rotation.z = 23.5 * Math.PI / 180;
             scene.add(earth);
-            // Load textures progressively (main texture first, extras after)
+
+            // Load textures progressively
             const tl = new THREE.TextureLoader();
 
-            // 1) Main color – applied as soon as it arrives
+            // 1) Main color
             tl.load('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg', tex => {
                 earthMat.map = tex;
                 earthMat.color.set(0xffffff);
                 earthMat.needsUpdate = true;
             });
 
-            // 2) Bump – adds terrain depth
+            // 2) Bump – terrain depth
             tl.load('https://unpkg.com/three-globe/example/img/earth-topology.png', tex => {
                 earthMat.bumpMap = tex;
                 earthMat.bumpScale = 0.08;
@@ -435,6 +734,7 @@
                 earthMat.specular.set(0x555555);
                 earthMat.needsUpdate = true;
             });
+
             // ── Clouds ──
             const cloudMat = new THREE.MeshPhongMaterial({
                 transparent: true, opacity: 0,
@@ -452,7 +752,7 @@
                 cloudMat.needsUpdate = true;
             });
 
-            // ── Atmosphere glow (simple back-side Fresnel) ──
+            // ── Atmosphere glow (back-side Fresnel) ──
             const atmosMat = new THREE.ShaderMaterial({
                 vertexShader: `
                 varying vec3 vNorm;
@@ -487,16 +787,16 @@
             fill.position.set(-50, -20, -30);
             scene.add(fill);
 
-            // ── Earthquake Data & Markers ──
+            // ── Earthquake Data ──
             const earthquakes = [
-                { name: "Valdivia, Chile", lat: -38.2, lng: -73.0, magnitude: 9.5, depth: 33 },
-                { name: "Prince William Sound, Alaska", lat: 61.0, lng: -147.7, magnitude: 9.2, depth: 25 },
-                { name: "Sumatra, Indonesia", lat: 3.3, lng: 95.8, magnitude: 9.1, depth: 30 },
-                { name: "Tohoku, Japan", lat: 38.3, lng: 142.4, magnitude: 9.0, depth: 24 },
-                { name: "Kamchatka, Russia", lat: 52.7, lng: 160.1, magnitude: 9.0, depth: 21 },
-                { name: "Bangalore, India", lat: 12.97, lng: 77.59, magnitude: 5.6, depth: 40 },
-                { name: "Sydney, Australia", lat: -33.86, lng: 151.20, magnitude: 4.8, depth: 20 },
-                { name: "San Francisco, USA", lat: 37.77, lng: -122.41, magnitude: 7.1, depth: 10 }
+                { name: "Valdivia, Chile", lat: -38.2, lng: -73.0, magnitude: 9.5, depth: 33, url: "https://earthquake.usgs.gov/earthquakes/eventpage/official19600522191117_30/executive" },
+                { name: "Prince William Sound, Alaska", lat: 61.0, lng: -147.7, magnitude: 9.2, depth: 25, url: "https://earthquake.usgs.gov/earthquakes/eventpage/official19640328033616_30/executive" },
+                { name: "Sumatra, Indonesia", lat: 3.3, lng: 95.8, magnitude: 9.1, depth: 30, url: "https://earthquake.usgs.gov/earthquakes/eventpage/official20041226005853_30/executive" },
+                { name: "Tohoku, Japan", lat: 38.3, lng: 142.4, magnitude: 9.0, depth: 24, url: "https://earthquake.usgs.gov/earthquakes/eventpage/official20110311054624120_30/executive" },
+                { name: "Kamchatka, Russia", lat: 52.7, lng: 160.1, magnitude: 9.0, depth: 21, url: "https://earthquake.usgs.gov/earthquakes/eventpage/official19521104165830_30/executive" },
+                { name: "Bangalore, India", lat: 12.97, lng: 77.59, magnitude: 5.6, depth: 40, url: "https://earthquake.usgs.gov/earthquakes/map/#%7B%22feed%22%3A%227day_all%22%2C%22search%22%3A%7B%22latitude%22%3A12.97%2C%22longitude%22%3A77.59%2C%22maxradiuskm%22%3A250%7D%7D" },
+                { name: "Sydney, Australia", lat: -33.86, lng: 151.20, magnitude: 4.8, depth: 20, url: "https://earthquake.usgs.gov/earthquakes/map/#%7B%22feed%22%3A%227day_all%22%2C%22search%22%3A%7B%22latitude%22%3A-33.86%2C%22longitude%22%3A151.2%2C%22maxradiuskm%22%3A250%7D%7D" },
+                { name: "San Francisco, USA", lat: 37.77, lng: -122.41, magnitude: 7.1, depth: 10, url: "https://earthquake.usgs.gov/earthquakes/eventpage/usp00040g0/executive" }
             ];
 
             function latLngToVector3(lat, lng, radius) {
@@ -508,28 +808,50 @@
                 return new THREE.Vector3(x, y, z);
             }
 
+            function getEqColor(depth) {
+                if (depth < 20) return 0xff3b30;  // Shallow — red
+                if (depth < 50) return 0xff9500;   // Medium — orange
+                return 0xffcc00;                    // Deep — yellow
+            }
+
+            function getEqColorCSS(depth) {
+                if (depth < 20) return '#ff3b30';
+                if (depth < 50) return '#ff9500';
+                return '#ffcc00';
+            }
+
+            function getSeverityLabel(mag) {
+                if (mag >= 8) return 'Great';
+                if (mag >= 7) return 'Major';
+                if (mag >= 6) return 'Strong';
+                if (mag >= 5) return 'Moderate';
+                if (mag >= 4) return 'Light';
+                return 'Minor';
+            }
+
+            function getClassification(depth) {
+                if (depth < 20) return 'Shallow';
+                if (depth < 70) return 'Intermediate';
+                return 'Deep';
+            }
+
             const spikeMeshes = [];
+            const hitboxMeshes = [];  // Invisible larger cylinders for reliable raycasting
             const haloMeshes = [];
             const markersGroup = new THREE.Group();
             earth.add(markersGroup);
 
-            // Flat ring geometry for pulsing ripple effect
-            const haloGeo = new THREE.RingGeometry(0.1, 0.4, 16);
+            // Flat ring geometry for pulsing ripple effect (smaller)
+            const haloGeo = new THREE.RingGeometry(0.08, 0.3, 16);
 
             earthquakes.forEach((eq, idx) => {
-                // Determine color based on depth: red for shallow, orange for medium, yellow for deep
-                let color = 0xffcc00; // Deep (Yellow)
-                if (eq.depth < 20) {
-                    color = 0xff3b30; // Shallow (Red)
-                } else if (eq.depth < 50) {
-                    color = 0xff9500; // Medium (Orange)
-                }
+                const color = getEqColor(eq.depth);
 
-                // Determine spike height based on magnitude
+                // Spike height based on magnitude
                 const height = (eq.magnitude - 4) * 0.5;
 
-                // Spike geometry (shifted so base is at 0,0,0 locally)
-                const spikeGeo = new THREE.CylinderGeometry(0.01, 0.06, height, 8);
+                // Visible spike — thicker for visibility
+                const spikeGeo = new THREE.CylinderGeometry(0.04, 0.08, height, 8);
                 spikeGeo.translate(0, height / 2, 0);
 
                 const spikeMat = new THREE.MeshPhongMaterial({
@@ -543,39 +865,54 @@
                 const pos = latLngToVector3(eq.lat, eq.lng, R);
                 spike.position.copy(pos);
 
-                // Align spike direction outwards from sphere surface normal
+                // Align spike outwards from sphere surface
                 const dir = pos.clone().normalize();
                 spike.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
                 spike.userData = { index: idx, name: eq.name, mag: eq.magnitude, depth: eq.depth };
                 markersGroup.add(spike);
                 spikeMeshes.push(spike);
 
-                // Pulsing Halo at the base
+                // Invisible hitbox — much wider for reliable click/hover detection
+                const hitboxGeo = new THREE.CylinderGeometry(0.25, 0.35, height + 0.3, 8);
+                hitboxGeo.translate(0, height / 2, 0);
+                const hitboxMat = new THREE.MeshBasicMaterial({ visible: false });
+                const hitbox = new THREE.Mesh(hitboxGeo, hitboxMat);
+                hitbox.position.copy(pos);
+                hitbox.quaternion.copy(spike.quaternion);
+                hitbox.userData = { index: idx };
+                markersGroup.add(hitbox);
+                hitboxMeshes.push(hitbox);
+
+                // Pulsing Halo at base — toned down (no additive blending)
                 const haloMat = new THREE.MeshBasicMaterial({
                     color: color,
                     side: THREE.DoubleSide,
                     transparent: true,
-                    opacity: 0.8,
+                    opacity: 0.4,
                     depthWrite: false
                 });
                 const halo = new THREE.Mesh(haloGeo, haloMat);
-                halo.position.copy(pos.clone().multiplyScalar(1.005)); // Avoid z-fighting
+                halo.position.copy(pos.clone().multiplyScalar(1.005));
                 halo.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
                 markersGroup.add(halo);
                 haloMeshes.push({ mesh: halo, time: Math.random() * Math.PI });
             });
 
-            // Populate list items in Sidebar
+            // ── Populate Sidebar List ──
             const eqListContainer = document.getElementById('eq-list-container');
             earthquakes.forEach((eq, idx) => {
                 const item = document.createElement('div');
                 item.className = 'eq-item';
                 item.id = `eq-item-${idx}`;
+                const colorCSS = getEqColorCSS(eq.depth);
                 item.innerHTML = `
-                    <div class="eq-loc">${eq.name}</div>
-                    <div class="eq-meta">
-                        <span class="eq-mag">M ${eq.magnitude.toFixed(1)}</span>
-                        <span class="eq-depth">${eq.depth} km depth</span>
+                    <div class="eq-color-dot" style="background:${colorCSS}; color:${colorCSS};"></div>
+                    <div class="eq-info">
+                        <div class="eq-loc">${eq.name}</div>
+                        <div class="eq-meta">
+                            <span class="eq-mag" style="color:${colorCSS};">M ${eq.magnitude.toFixed(1)}</span>
+                            <span class="eq-depth">${eq.depth} km depth</span>
+                        </div>
                     </div>
                 `;
                 item.addEventListener('click', () => {
@@ -584,23 +921,77 @@
                 eqListContainer.appendChild(item);
             });
 
-            // Tracking and Fly-To State
+            // ── Detail Panel Logic ──
+            const detailPanel = document.getElementById('detail-panel');
+            const detailName = document.getElementById('detail-name');
+            const detailBadge = document.getElementById('detail-badge');
+            const detailSeverity = document.getElementById('detail-severity');
+            const detailDepth = document.getElementById('detail-depth');
+            const detailLat = document.getElementById('detail-lat');
+            const detailLng = document.getElementById('detail-lng');
+            const detailClass = document.getElementById('detail-class');
+            const detailBar = document.getElementById('detail-bar');
+            const detailClose = document.getElementById('detail-close');
+            const detailLink = document.getElementById('detail-link');
+
+            function showDetailPanel(eq) {
+                const colorCSS = getEqColorCSS(eq.depth);
+                detailName.textContent = eq.name;
+                detailLink.href = eq.url;
+                detailBadge.textContent = eq.magnitude.toFixed(1);
+                detailBadge.style.background = colorCSS;
+                detailSeverity.textContent = getSeverityLabel(eq.magnitude);
+                detailSeverity.style.color = colorCSS;
+                detailDepth.textContent = eq.depth + ' km';
+                detailLat.textContent = Math.abs(eq.lat).toFixed(2) + '°' + (eq.lat >= 0 ? 'N' : 'S');
+                detailLng.textContent = Math.abs(eq.lng).toFixed(2) + '°' + (eq.lng >= 0 ? 'E' : 'W');
+                detailClass.textContent = getClassification(eq.depth);
+                // Magnitude bar: scale 0-10 → 0-100%
+                const barPct = Math.min((eq.magnitude / 10) * 100, 100);
+                detailBar.style.width = barPct + '%';
+                detailBar.style.background = `linear-gradient(90deg, ${colorCSS}, ${colorCSS}88)`;
+                detailPanel.classList.remove('hidden');
+                // Re-trigger animation
+                detailPanel.style.animation = 'none';
+                detailPanel.offsetHeight; // force reflow
+                detailPanel.style.animation = '';
+            }
+
+            function hideDetailPanel() {
+                detailPanel.classList.add('hidden');
+            }
+
+            detailClose.addEventListener('click', (e) => {
+                e.stopPropagation();
+                hideDetailPanel();
+                // Deselect sidebar
+                document.querySelectorAll('.eq-item').forEach(el => el.classList.remove('active'));
+                isTracking = false;
+                clearTimeout(arTimeout);
+                arTimeout = setTimeout(() => { ctrl.autoRotate = true; }, 2000);
+            });
+
+            // ── Select Earthquake (sidebar click or spike click) ──
             let trackingIndex = -1;
             let isTracking = false;
 
             function selectEarthquake(idx) {
+                // Highlight sidebar item
                 document.querySelectorAll('.eq-item').forEach(el => el.classList.remove('active'));
                 const item = document.getElementById(`eq-item-${idx}`);
                 if (item) {
                     item.classList.add('active');
                     item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
+                // Show detail panel
+                showDetailPanel(earthquakes[idx]);
+                // Start camera tracking
                 trackingIndex = idx;
                 isTracking = true;
                 ctrl.autoRotate = false;
             }
 
-            // Raycaster Hover & Mouse state
+            // ── Raycaster & Mouse ──
             const mouse = new THREE.Vector2(-999, -999);
             const raycaster = new THREE.Raycaster();
             let hoveredIndex = -1;
@@ -619,11 +1010,12 @@
                 clientY = e.clientY;
             });
 
+            // Click handler — uses hitbox meshes for reliable detection
             window.addEventListener('click', (e) => {
-                if (e.target.closest('#ui') || e.target.closest('#tooltip')) return;
+                if (e.target.closest('#ui') || e.target.closest('#tooltip') || e.target.closest('#detail-panel')) return;
 
                 raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects(spikeMeshes);
+                const intersects = raycaster.intersectObjects(hitboxMeshes);
                 if (intersects.length > 0) {
                     const idx = intersects[0].object.userData.index;
                     selectEarthquake(idx);
@@ -672,16 +1064,16 @@
 
             // Auto-rotate pause/resume on interaction
             let arTimeout;
-            ctrl.addEventListener('start', () => { 
+            ctrl.addEventListener('start', () => {
                 ctrl.autoRotate = false;
-                isTracking = false; // Stop camera tracking if user manual orbits
+                isTracking = false;
                 document.querySelectorAll('.eq-item').forEach(el => el.classList.remove('active'));
             });
             ctrl.addEventListener('end', () => {
                 clearTimeout(arTimeout);
-                arTimeout = setTimeout(() => { 
+                arTimeout = setTimeout(() => {
                     if (!isTracking) {
-                        ctrl.autoRotate = true; 
+                        ctrl.autoRotate = true;
                     }
                 }, 4000);
             });
@@ -698,13 +1090,13 @@
                 const t = performance.now() * 0.0001;
                 sun.position.set(Math.cos(t) * 50, 20, Math.sin(t) * 50);
 
-                // Pulsing halos ripple animation
+                // Pulsing halos — toned down animation
                 haloMeshes.forEach(item => {
                     item.time += 0.02;
-                    const progress = (item.time % Math.PI) / Math.PI; // 0 to 1
-                    const scale = 1 + progress * 2.5; // Scale from 1 to 3.5
+                    const progress = (item.time % Math.PI) / Math.PI;
+                    const scale = 1 + progress * 1.5; // Scale from 1 to 2.5 (was 3.5)
                     item.mesh.scale.set(scale, scale, 1);
-                    item.mesh.material.opacity = (1 - progress) * 0.8;
+                    item.mesh.material.opacity = (1 - progress) * 0.4; // Max 0.4 (was 0.8)
                 });
 
                 // Camera Fly-To & Lock-On tracking
@@ -713,14 +1105,15 @@
                     spikeMeshes[trackingIndex].getWorldPosition(targetWorldPos);
                     const currentDist = camera.position.length();
                     const targetCamPos = targetWorldPos.clone().normalize().multiplyScalar(currentDist);
-                    camera.position.lerp(targetCamPos, 0.05);
+                    camera.position.lerp(targetCamPos, 0.04);
                 }
 
-                // Raycast hover detection
+                // Raycast hover detection — uses hitbox meshes
                 raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects(spikeMeshes);
+                const intersects = raycaster.intersectObjects(hitboxMeshes);
                 if (intersects.length > 0) {
                     const idx = intersects[0].object.userData.index;
+                    canvas.style.cursor = 'pointer';
                     if (hoveredIndex !== idx) {
                         if (hoveredIndex !== -1) resetSpikeHighlight(hoveredIndex);
                         hoveredIndex = idx;
@@ -729,6 +1122,7 @@
                     }
                     updateTooltipPosition();
                 } else {
+                    canvas.style.cursor = 'grab';
                     if (hoveredIndex !== -1) {
                         resetSpikeHighlight(hoveredIndex);
                         hoveredIndex = -1;
